@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\RoleMiddleware;
 use App\Services\OrderStateConflictException;
+use App\Services\PaymentIdempotencyConflictException;
 use App\Services\ReservationConflictException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -26,6 +27,18 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (PaymentIdempotencyConflictException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'data' => null,
+                'message' => 'La clave de idempotencia ya fue utilizada para otro pedido o canal.',
+                'meta' => (object) [],
+            ], 409);
+        });
+
         $exceptions->render(function (OrderStateConflictException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

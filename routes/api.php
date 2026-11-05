@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\MenuDiaController;
 use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReservationController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::patch('/pedidos/{pedido}', [OrderController::class, 'update'])->name('pedidos.update');
         Route::post('/pedidos/{pedido}/cancelacion', [OrderController::class, 'cancel'])->name('pedidos.cancel');
         Route::patch('/pedidos/{pedido}/estado', [OrderController::class, 'changeStatus'])->name('pedidos.estado');
+        Route::get('/pedidos/{pedido}/pagos', [PaymentController::class, 'indexForOrder'])->name('pedidos.pagos.index');
+        Route::post('/pedidos/{pedido}/pagos/enlinea', [PaymentController::class, 'createOnline'])->name('pedidos.pagos.online');
+        Route::post('/pedidos/{pedido}/pagos/presenciales', [PaymentController::class, 'createInPerson'])->name('pedidos.pagos.in-person');
 
         Route::get('/productos', [ProductController::class, 'index'])->name('productos.index');
         Route::get('/productos/{producto}', [ProductController::class, 'show'])->name('productos.show');
@@ -38,5 +42,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/menus-dia', [MenuDiaController::class, 'store'])->name('menus-dia.store');
         Route::patch('/menus-dia/{menuDia}', [MenuDiaController::class, 'update'])->name('menus-dia.update');
         Route::post('/menus-dia/{menuDia}/publicacion', [MenuDiaController::class, 'publish'])->name('menus-dia.publish');
+
+        Route::get('/pagos/{pago}', [PaymentController::class, 'show'])->name('pagos.show');
     });
 });

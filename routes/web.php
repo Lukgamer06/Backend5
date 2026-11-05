@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\MenuDiaController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReservationController;
 use Illuminate\Support\Facades\Route;
@@ -51,5 +52,9 @@ Route::middleware(['auth', 'role:ADMINISTRADOR,OPERADOR,CLIENTE'])->group(functi
         ->only(['index', 'create', 'store', 'show', 'edit', 'update'])
         ->parameters(['incidencias' => 'incidencia'])
         ->names('incidents');
+    Route::resource('/pagos', PaymentController::class)
+        ->only(['index', 'show'])
+        ->parameters(['pagos' => 'pago'])
+        ->names('payments');
     Route::post('/logout', LogoutController::class)->name('logout');
 });

@@ -20,6 +20,8 @@
                     <a class="nav-link" href="{{ route('menus.index') }}">{{ $module }}</a>
                 @elseif ($module === 'Incidencias')
                     <a class="nav-link" href="{{ route('incidents.index') }}">{{ $module }}</a>
+                @elseif ($module === 'Pagos')
+                    <a class="nav-link" href="{{ route('payments.index') }}">{{ $module }}</a>
                 @else
                     <span class="nav-link text-body-secondary" aria-disabled="true">{{ $module }}</span>
                 @endif

@@ -10,6 +10,7 @@ use App\Models\Producto;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 class CatalogAndMenuApiTest extends TestCase
@@ -37,7 +38,13 @@ class CatalogAndMenuApiTest extends TestCase
     public function test_only_administrators_can_filter_or_view_unavailable_products(): void
     {
         $customer = Usuario::factory()->cliente()->create();
+        $operator = Usuario::factory()->operador()->create();
         $inactiveProduct = Producto::factory()->noDisponible()->create();
+        $availableProduct = Producto::factory()->create();
+
+        $this->assertFalse(Gate::forUser($customer)->allows('view', $inactiveProduct));
+        $this->assertTrue(Gate::forUser($customer)->allows('view', $availableProduct));
+        $this->assertFalse(Gate::forUser($operator)->allows('view', $inactiveProduct));
 
         $this->actingAs($customer, 'sanctum')
             ->getJson('/api/v1/productos?disponible=0')
@@ -49,6 +56,7 @@ class CatalogAndMenuApiTest extends TestCase
             ->assertJsonPath('message', 'Recurso no encontrado.');
 
         $administrator = Usuario::factory()->administrador()->create();
+        $this->assertTrue(Gate::forUser($administrator)->allows('view', $inactiveProduct));
 
         $this->actingAs($administrator, 'sanctum')
             ->getJson('/api/v1/productos?disponible=0')

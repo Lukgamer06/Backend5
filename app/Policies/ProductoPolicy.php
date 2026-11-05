@@ -19,7 +19,7 @@ class ProductoPolicy
 
     public function view(Usuario $usuario, Producto $producto): bool
     {
-        return true;
+        return $this->isAdministrator($usuario) || $producto->disponible;
     }
 
     public function create(Usuario $usuario): bool

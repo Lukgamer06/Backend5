@@ -21,13 +21,7 @@ class AuthSessionResource extends JsonResource
 
         $usuario = $this->resource->usuario;
         $data = [
-            'usuario' => [
-                'id' => $usuario->id,
-                'nombres' => $usuario->nombres,
-                'apellidos' => $usuario->apellidos,
-                'correo' => $usuario->correo,
-                'rol' => $usuario->rol->value,
-            ],
+            'usuario' => UsuarioResource::make($usuario),
         ];
 
         if ($this->resource->accessToken !== null) {

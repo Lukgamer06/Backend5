@@ -21,7 +21,7 @@ class IncidentService
     ) {}
 
     /**
-     * @param  array{search?: string, prioridad?: string, estado?: string}  $filters
+     * @param  array{search?: string, prioridad?: string, estado?: string, per_page?: int}  $filters
      * @return LengthAwarePaginator<int, Incidencia>
      */
     public function paginate(array $filters): LengthAwarePaginator

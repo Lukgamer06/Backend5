@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\IncidentController;
 use App\Http\Controllers\Api\V1\MenuDiaController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
@@ -18,6 +19,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/me', [AuthController::class, 'me'])->name('me');
+
+        Route::get('/incidencias', [IncidentController::class, 'index'])->name('incidencias.index');
+        Route::post('/incidencias', [IncidentController::class, 'store'])->name('incidencias.store');
+        Route::patch('/incidencias/{incidencia}', [IncidentController::class, 'update'])->name('incidencias.update');
 
         Route::get('/reservas', [ReservationController::class, 'index'])->name('reservas.index');
         Route::post('/reservas', [ReservationController::class, 'store'])->name('reservas.store');

@@ -12,6 +12,8 @@
             <li class="nav-item">
                 @if (in_array($module, ['Reservas', 'Mis reservas'], true))
                     <a class="nav-link" href="{{ route('reservations.index') }}">{{ $module }}</a>
+                @elseif (in_array($module, ['Pedidos', 'Mis pedidos'], true))
+                    <a class="nav-link" href="{{ route('orders.index') }}">{{ $module }}</a>
                 @else
                     <span class="nav-link text-body-secondary" aria-disabled="true">{{ $module }}</span>
                 @endif

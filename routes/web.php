@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReservationController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,5 +23,12 @@ Route::middleware(['auth', 'role:ADMINISTRADOR,OPERADOR,CLIENTE'])->group(functi
     Route::resource('/reservas', ReservationController::class)
         ->parameters(['reservas' => 'reserva'])
         ->names('reservations');
+    Route::patch('/pedidos/{pedido}/cancelar', [OrderController::class, 'cancel'])
+        ->name('orders.cancel');
+    Route::patch('/pedidos/{pedido}/estado', [OrderController::class, 'updateStatus'])
+        ->name('orders.status');
+    Route::resource('/pedidos', OrderController::class)
+        ->parameters(['pedidos' => 'pedido'])
+        ->names('orders');
     Route::post('/logout', LogoutController::class)->name('logout');
 });

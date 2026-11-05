@@ -21,7 +21,8 @@
                     <form
                         method="POST"
                         action="{{ route('reservations.cancel', $reservation) }}"
-                        onsubmit="return confirm('¿Deseas cancelar esta reserva?')"
+                        data-confirm="¿Deseas cancelar esta reserva?"
+                        data-loading-text="Cancelando..."
                     >
                         @csrf
                         @method('PATCH')
@@ -33,7 +34,8 @@
                 <form
                     method="POST"
                     action="{{ route('reservations.destroy', $reservation) }}"
-                    onsubmit="return confirm('¿Deseas eliminar esta reserva?')"
+                    data-confirm="¿Deseas eliminar esta reserva?"
+                    data-loading-text="Eliminando..."
                 >
                     @csrf
                     @method('DELETE')

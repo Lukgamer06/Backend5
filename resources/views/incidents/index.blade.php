@@ -121,6 +121,7 @@
                     @empty
                         <tr>
                             <td class="py-5 text-center text-body-secondary" colspan="7">
+                                <span class="d-block fw-semibold">Sin incidencias registradas</span>
                                 No hay incidencias que coincidan con los filtros.
                             </td>
                         </tr>

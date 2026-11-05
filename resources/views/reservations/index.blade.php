@@ -106,6 +106,7 @@
                     @empty
                         <tr>
                             <td class="py-5 text-center text-body-secondary" colspan="6">
+                                <span class="d-block fw-semibold">No hay reservas registradas</span>
                                 No hay reservas que coincidan con los filtros.
                             </td>
                         </tr>

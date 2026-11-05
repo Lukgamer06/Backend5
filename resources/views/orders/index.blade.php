@@ -109,6 +109,7 @@
                     @empty
                         <tr>
                             <td class="py-5 text-center text-body-secondary" colspan="7">
+                                <span class="d-block fw-semibold">No hay pedidos registrados</span>
                                 No hay pedidos que coincidan con los filtros.
                             </td>
                         </tr>

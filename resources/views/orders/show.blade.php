@@ -18,7 +18,8 @@
                     <form
                         method="POST"
                         action="{{ route('orders.cancel', $order) }}"
-                        onsubmit="return confirm('¿Deseas cancelar este pedido?')"
+                        data-confirm="¿Deseas cancelar este pedido?"
+                        data-loading-text="Cancelando..."
                     >
                         @csrf
                         @method('PATCH')
@@ -31,7 +32,8 @@
                     <form
                         method="POST"
                         action="{{ route('orders.destroy', $order) }}"
-                        onsubmit="return confirm('¿Deseas eliminar este pedido y sus detalles?')"
+                        data-confirm="¿Deseas eliminar este pedido y sus detalles?"
+                        data-loading-text="Eliminando..."
                     >
                         @csrf
                         @method('DELETE')

@@ -111,6 +111,7 @@
                     @empty
                         <tr>
                             <td class="py-5 text-center text-body-secondary" colspan="7">
+                                <span class="d-block fw-semibold">No hay pagos registrados</span>
                                 No hay pagos que coincidan con los filtros.
                             </td>
                         </tr>

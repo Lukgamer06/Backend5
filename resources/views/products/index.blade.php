@@ -80,7 +80,8 @@
                                             class="d-inline"
                                             method="POST"
                                             action="{{ route('products.deactivate', $product) }}"
-                                            onsubmit="return confirm('¿Desactivar este producto? Los pedidos existentes conservarán su detalle.')"
+                                            data-confirm="¿Desactivar este producto? Los pedidos existentes conservarán su detalle."
+                                            data-loading-text="Desactivando..."
                                         >
                                             @csrf
                                             @method('PATCH')
@@ -102,6 +103,7 @@
                                 class="py-5 text-center text-body-secondary"
                                 colspan="{{ auth()->user()->can('create', \App\Models\Producto::class) ? 5 : 4 }}"
                             >
+                                <span class="d-block fw-semibold">No hay productos para mostrar</span>
                                 No hay productos que coincidan con la búsqueda.
                             </td>
                         </tr>

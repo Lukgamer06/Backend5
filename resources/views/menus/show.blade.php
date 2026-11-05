@@ -52,7 +52,8 @@
             class="mt-3"
             method="POST"
             action="{{ route('menus.publish', $menu) }}"
-            onsubmit="return confirm('¿Publicar el menú? Los cambios quedarán bloqueados.')"
+            data-confirm="¿Publicar el menú? Los cambios quedarán bloqueados."
+            data-loading-text="Publicando..."
         >
             @csrf
             @method('PATCH')

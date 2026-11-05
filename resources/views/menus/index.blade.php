@@ -100,7 +100,8 @@
                                     <form
                                         method="POST"
                                         action="{{ route('menus.publish', $menu) }}"
-                                        onsubmit="return confirm('¿Publicar el menú de esta fecha? Después no podrá editarse.')"
+                                        data-confirm="¿Publicar el menú de esta fecha? Después no podrá editarse."
+                                        data-loading-text="Publicando..."
                                     >
                                         @csrf
                                         @method('PATCH')
@@ -115,6 +116,7 @@
         @empty
             <div class="col-12">
                 <div class="card card-body py-5 text-center text-body-secondary">
+                    <span class="d-block fw-semibold">Aún no hay menús</span>
                     No hay menús para los filtros seleccionados.
                 </div>
             </div>

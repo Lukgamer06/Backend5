@@ -53,5 +53,6 @@
     crossorigin="anonymous"
 ></script>
 @stack('scripts')
+<x-form-ux />
 </body>
 </html>

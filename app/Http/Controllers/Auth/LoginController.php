@@ -31,9 +31,4 @@ class LoginController
 
         return redirect()->intended(route('home'));
     }
-
-    public function home(): View
-    {
-        return view('auth.login');
-    }
 }

@@ -1,0 +1,74 @@
+name: hostalconnect-unab
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html:z
+      - vendor:/var/www/html/vendor
+      - app_storage:/var/www/html/storage
+      - bootstrap_cache:/var/www/html/bootstrap/cache
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - hostalconnect
+    healthcheck:
+      test:
+        - CMD
+        - php
+        - -r
+        - "$$socket = @fsockopen('127.0.0.1', 9000); exit($$socket ? 0 : 1);"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-hostalconnect}
+      MYSQL_USER: ${DB_USERNAME:-hostalconnect}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - hostalconnect
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysql -h 127.0.0.1 -u root -p"$${MYSQL_ROOT_PASSWORD}" --execute='SELECT 1' --silent
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  nginx:
+    image: nginx:1.29-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${APP_HTTP_PORT:-8080}:80"
+    volumes:
+      - .:/var/www/html:ro,z
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - hostalconnect
+
+networks:
+  hostalconnect:
+    driver: bridge
+
+volumes:
+  app_storage:
+  bootstrap_cache:
+  mysql_data:
+  vendor:

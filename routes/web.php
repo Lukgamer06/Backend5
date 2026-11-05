@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReservationController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,5 +31,13 @@ Route::middleware(['auth', 'role:ADMINISTRADOR,OPERADOR,CLIENTE'])->group(functi
     Route::resource('/pedidos', OrderController::class)
         ->parameters(['pedidos' => 'pedido'])
         ->names('orders');
+    Route::patch('/productos/{producto}/activar', [ProductController::class, 'activate'])
+        ->name('products.activate');
+    Route::patch('/productos/{producto}/desactivar', [ProductController::class, 'deactivate'])
+        ->name('products.deactivate');
+    Route::resource('/productos', ProductController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update'])
+        ->parameters(['productos' => 'producto'])
+        ->names('products');
     Route::post('/logout', LogoutController::class)->name('logout');
 });

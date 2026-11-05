@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\MenuDiaController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -46,5 +47,9 @@ Route::middleware(['auth', 'role:ADMINISTRADOR,OPERADOR,CLIENTE'])->group(functi
         ->only(['index', 'create', 'store', 'show', 'edit', 'update'])
         ->parameters(['menus' => 'menuDia'])
         ->names('menus');
+    Route::resource('/incidencias', IncidentController::class)
+        ->only(['index', 'create', 'store', 'show', 'edit', 'update'])
+        ->parameters(['incidencias' => 'incidencia'])
+        ->names('incidents');
     Route::post('/logout', LogoutController::class)->name('logout');
 });

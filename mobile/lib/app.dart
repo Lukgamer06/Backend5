@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 import 'routes/app_router.dart';
-import 'widgets/app_bootstrap_view.dart';
 
 class HostalConnectApp extends StatelessWidget {
   const HostalConnectApp({super.key});

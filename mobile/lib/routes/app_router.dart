@@ -1,6 +1,5 @@
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
-
-import '../widgets/app_bootstrap_view.dart';
 
 GoRouter createAppRouter() {
   return GoRouter(
@@ -8,7 +7,7 @@ GoRouter createAppRouter() {
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, state) => const AppBootstrapView(),
+        builder: (context, state) => const SizedBox.shrink(),
       ),
     ],
   );

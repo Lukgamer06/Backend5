@@ -17,6 +17,6 @@ flutter analyze
 flutter test
 ```
 
-La app registra las dependencias base (`http.Client` y `FlutterSecureStorage`) con Provider y configura GoRouter. La pantalla raíz es un placeholder técnico; no hay login ni módulos funcionales en esta fase.
+La app registra las dependencias base (`http.Client` y `FlutterSecureStorage`) con Provider y configura GoRouter. La ruta raíz no dibuja interfaz; no hay pantallas ni módulos funcionales en esta fase.
 
 El repositorio API y Flutter comparten el mismo proyecto Git, pero el código móvil vive aislado en `mobile/`.

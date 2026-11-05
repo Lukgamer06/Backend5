@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\RoleMiddleware;
+use App\Services\OrderStateConflictException;
 use App\Services\ReservationConflictException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -25,6 +26,20 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (OrderStateConflictException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'data' => null,
+                'message' => 'El estado del pedido no permite la transición solicitada.',
+                'meta' => [
+                    'errors' => $exception->errors(),
+                ],
+            ], 409);
+        });
+
         $exceptions->render(function (ReservationConflictException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

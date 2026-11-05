@@ -24,12 +24,16 @@ class OrderRepository
      *     estado?: string,
      *     tipo_atencion?: string,
      *     fecha_desde?: string,
-     *     fecha_hasta?: string
+     *     fecha_hasta?: string,
+     *     per_page?: int
      * }  $filters
      * @return LengthAwarePaginator<int, Pedido>
      */
-    public function paginateFor(Usuario $usuario, array $filters): LengthAwarePaginator
-    {
+    public function paginateFor(
+        Usuario $usuario,
+        array $filters,
+        int $perPage = 15,
+    ): LengthAwarePaginator {
         return Pedido::query()
             ->with(['cliente', 'mesa', 'detalles.producto'])
             ->when(
@@ -86,7 +90,7 @@ class OrderRepository
                 ),
             )
             ->orderByDesc('created_at')
-            ->paginate(15)
+            ->paginate($perPage)
             ->withQueryString();
     }
 

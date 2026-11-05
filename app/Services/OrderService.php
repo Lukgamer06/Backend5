@@ -11,6 +11,7 @@ use App\Enums\ModalidadServicioEnum;
 use App\Enums\RolUsuarioEnum;
 use App\Enums\TipoAtencionEnum;
 use App\Models\Cliente;
+use App\Models\DetallePedido;
 use App\Models\Mesa;
 use App\Models\Pedido;
 use App\Models\Producto;
@@ -36,18 +37,27 @@ class OrderService
      *     estado?: string,
      *     tipo_atencion?: string,
      *     fecha_desde?: string,
-     *     fecha_hasta?: string
+     *     fecha_hasta?: string,
+     *     per_page?: int
      * }  $filters
      * @return LengthAwarePaginator<int, Pedido>
      */
     public function paginate(Usuario $usuario, array $filters): LengthAwarePaginator
     {
-        return $this->orderRepository->paginateFor($usuario, $filters);
+        $perPage = (int) ($filters['per_page'] ?? 15);
+
+        return $this->orderRepository->paginateFor($usuario, $filters, $perPage);
     }
 
     public function find(int $pedidoId): ?Pedido
     {
         return $this->orderRepository->find($pedidoId);
+    }
+
+    public function findOrFail(int $pedidoId): Pedido
+    {
+        return $this->find($pedidoId)
+            ?? throw (new ModelNotFoundException)->setModel(Pedido::class, [$pedidoId]);
     }
 
     /**
@@ -136,35 +146,55 @@ class OrderService
                 throw new ModelNotFoundException('No se encontró el pedido que se desea actualizar.');
             }
 
-            if ($lockedPedido->pagos()->exists()) {
-                throw ValidationException::withMessages([
-                    'pedido' => 'No se puede modificar un pedido que ya tiene pagos asociados.',
-                ]);
+            return $this->updateLocked($lockedPedido, $data, $lines);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function updatePartial(Pedido $pedido, array $data): Pedido
+    {
+        return DB::transaction(function () use ($pedido, $data): Pedido {
+            $lockedPedido = $this->orderRepository->findForUpdate($pedido->getKey());
+
+            if (! $lockedPedido instanceof Pedido) {
+                throw new ModelNotFoundException('No se encontró el pedido que se desea actualizar.');
             }
 
-            $cliente = $this->orderRepository->findCustomer((int) $data['cliente_id']);
+            $lockedPedido->loadMissing('detalles');
+            $currentData = [
+                'cliente_id' => $lockedPedido->cliente_id,
+                'reserva_id' => $lockedPedido->reserva_id,
+                'mesa_id' => $lockedPedido->mesa_id,
+                'tipo_atencion' => $lockedPedido->tipo_atencion->value,
+                'modalidad_servicio' => $lockedPedido->modalidad_servicio->value,
+                'fecha_programada' => $lockedPedido->fecha_programada?->format('Y-m-d\TH:i'),
+                'estado' => $lockedPedido->estado->value,
+            ];
+            $lines = $data['lineas'] ?? $lockedPedido->detalles
+                ->map(fn (DetallePedido $detalle): array => [
+                    'producto_id' => $detalle->producto_id,
+                    'cantidad' => $detalle->cantidad,
+                    'observaciones' => $detalle->observaciones,
+                ])
+                ->all();
+            $mergedData = array_replace($currentData, $data);
 
-            if (! $cliente instanceof Cliente) {
-                throw new ModelNotFoundException('No se encontró el cliente seleccionado.');
+            if (
+                isset($data['modalidad_servicio'])
+                && $data['modalidad_servicio'] === ModalidadServicioEnum::SIN_MESA->value
+            ) {
+                $mergedData['mesa_id'] = null;
+                $mergedData['reserva_id'] = null;
             }
 
-            $normalized = $this->normalizeOrderData($cliente, $data);
-            $nextState = EstadoPedidoEnum::from($data['estado']);
-            $this->assertValidTransition($lockedPedido->estado, $nextState);
-            $products = $this->availableProductsForLines($lines);
-            $totalCents = $this->totalInCents($lines, $products);
-
-            $lockedPedido->fill([
-                'cliente_id' => $cliente->getKey(),
-                ...$normalized,
-                'estado' => $nextState,
-                'total' => $this->formatMoney($totalCents),
-            ]);
-            $this->orderRepository->save($lockedPedido);
-            $this->replaceDetails($lockedPedido, $lines, $products);
-
-            return $this->orderRepository->find($lockedPedido->getKey())
-                ?? throw new ModelNotFoundException('No se encontró el pedido actualizado.');
+            return $this->updateLocked(
+                $lockedPedido,
+                $mergedData,
+                $lines,
+                preserveDetails: ! array_key_exists('lineas', $data),
+            );
         });
     }
 
@@ -479,9 +509,56 @@ class OrderService
         ];
 
         if (! in_array($next, $transitions[$current->value], true)) {
+            throw new OrderStateConflictException;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  list<array{producto_id: int, cantidad: int, observaciones?: string|null}>  $lines
+     */
+    private function updateLocked(
+        Pedido $lockedPedido,
+        array $data,
+        array $lines,
+        bool $preserveDetails = false,
+    ): Pedido {
+        if ($lockedPedido->pagos()->exists()) {
             throw ValidationException::withMessages([
-                'estado' => 'La transición de estado solicitada no está permitida.',
+                'pedido' => 'No se puede modificar un pedido que ya tiene pagos asociados.',
             ]);
         }
+
+        $cliente = $this->orderRepository->findCustomer((int) $data['cliente_id']);
+
+        if (! $cliente instanceof Cliente) {
+            throw new ModelNotFoundException('No se encontró el cliente seleccionado.');
+        }
+
+        $normalized = $this->normalizeOrderData($cliente, $data);
+        $nextState = EstadoPedidoEnum::from($data['estado']);
+        $this->assertValidTransition($lockedPedido->estado, $nextState);
+
+        $attributes = [
+            'cliente_id' => $cliente->getKey(),
+            ...$normalized,
+            'estado' => $nextState,
+        ];
+
+        if (! $preserveDetails) {
+            $products = $this->availableProductsForLines($lines);
+            $totalCents = $this->totalInCents($lines, $products);
+            $attributes['total'] = $this->formatMoney($totalCents);
+        }
+
+        $lockedPedido->fill($attributes);
+        $this->orderRepository->save($lockedPedido);
+
+        if (! $preserveDetails) {
+            $this->replaceDetails($lockedPedido, $lines, $products);
+        }
+
+        return $this->orderRepository->find($lockedPedido->getKey())
+            ?? throw new ModelNotFoundException('No se encontró el pedido actualizado.');
     }
 }

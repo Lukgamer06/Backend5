@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\EstadoOperativoMesaEnum;
 use App\Enums\EstadoReservaEnum;
 use App\Enums\RolUsuarioEnum;
 use App\Models\Cliente;
@@ -23,6 +22,7 @@ class ReservationService
 {
     public function __construct(
         private readonly ReservationRepository $reservationRepository,
+        private readonly AvailabilityService $availabilityService,
     ) {}
 
     /**
@@ -30,13 +30,22 @@ class ReservationService
      *     search?: string,
      *     estado?: string,
      *     fecha_desde?: string,
-     *     fecha_hasta?: string
+     *     fecha_hasta?: string,
+     *     per_page?: int
      * }  $filters
      * @return LengthAwarePaginator<int, Reserva>
      */
     public function paginate(Usuario $usuario, array $filters): LengthAwarePaginator
     {
-        return $this->reservationRepository->paginateFor($usuario, $filters);
+        $perPage = (int) ($filters['per_page'] ?? 15);
+
+        return $this->reservationRepository->paginateFor($usuario, $filters, $perPage);
+    }
+
+    public function findOrFail(int $reservaId): Reserva
+    {
+        return $this->reservationRepository->find($reservaId)
+            ?? throw (new ModelNotFoundException)->setModel(Reserva::class, [$reservaId]);
     }
 
     /**
@@ -216,27 +225,12 @@ class ReservationService
             ]);
         }
 
-        if ($mesa->estado_operativo !== EstadoOperativoMesaEnum::HABILITADA) {
-            throw ValidationException::withMessages([
-                'mesa_id' => 'La mesa seleccionada no está habilitada para reservas.',
-            ]);
-        }
-
-        if ($numeroPersonas > $mesa->capacidad) {
-            throw ValidationException::withMessages([
-                'numero_personas' => 'El número de personas supera la capacidad de la mesa.',
-            ]);
-        }
-
-        if ($this->reservationRepository->hasConflict(
+        $this->availabilityService->ensureTableIsAvailable(
             $mesa,
             $fechaInicio,
             $fechaFin,
+            $numeroPersonas,
             $exceptReservaId,
-        )) {
-            throw ValidationException::withMessages([
-                'mesa_id' => 'La mesa ya tiene una reserva en el horario seleccionado.',
-            ]);
-        }
+        );
     }
 }

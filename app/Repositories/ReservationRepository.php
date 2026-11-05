@@ -23,12 +23,16 @@ class ReservationRepository
      *     search?: string,
      *     estado?: string,
      *     fecha_desde?: string,
-     *     fecha_hasta?: string
+     *     fecha_hasta?: string,
+     *     per_page?: int
      * }  $filters
      * @return LengthAwarePaginator<int, Reserva>
      */
-    public function paginateFor(Usuario $usuario, array $filters): LengthAwarePaginator
-    {
+    public function paginateFor(
+        Usuario $usuario,
+        array $filters,
+        int $perPage = 15,
+    ): LengthAwarePaginator {
         $query = Reserva::query()
             ->with(['cliente', 'mesa', 'usuario'])
             ->when(
@@ -81,7 +85,7 @@ class ReservationRepository
             )
             ->orderByDesc('fecha_inicio');
 
-        return $query->paginate(15)->withQueryString();
+        return $query->paginate($perPage)->withQueryString();
     }
 
     public function find(int $reservaId): ?Reserva

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\RoleMiddleware;
+use App\Services\ReservationConflictException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,6 +25,20 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (ReservationConflictException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'data' => null,
+                'message' => 'La reserva entra en conflicto con la disponibilidad de la mesa.',
+                'meta' => [
+                    'errors' => $exception->errors(),
+                ],
+            ], 409);
+        });
+
         $exceptions->render(function (AuthenticationException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

@@ -36,6 +36,11 @@ class MenuService
         return $this->menuRepository->findByDate($fecha);
     }
 
+    public function findPublishedByDate(DateTimeInterface $fecha): ?MenuDia
+    {
+        return $this->menuRepository->findPublishedByDate($fecha);
+    }
+
     /**
      * @return Collection<int, Producto>
      */

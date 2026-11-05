@@ -61,6 +61,15 @@ class MenuRepository
             ->first();
     }
 
+    public function findPublishedByDate(DateTimeInterface $fecha): ?MenuDia
+    {
+        return MenuDia::query()
+            ->with('productos')
+            ->whereDate('fecha', $fecha->format('Y-m-d'))
+            ->where('estado', 'PUBLICADO')
+            ->first();
+    }
+
     public function findForUpdate(int $menuDiaId): ?MenuDia
     {
         return MenuDia::query()->lockForUpdate()->find($menuDiaId);

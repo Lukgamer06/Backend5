@@ -133,6 +133,20 @@ class AuthApiTest extends TestCase
             ]);
     }
 
+    public function test_unsupported_delete_method_returns_a_standardized_405(): void
+    {
+        $usuario = Usuario::factory()->administrador()->create();
+
+        $this->actingAs($usuario, 'sanctum')
+            ->deleteJson('/api/v1/reservas/1')
+            ->assertMethodNotAllowed()
+            ->assertExactJson([
+                'data' => null,
+                'message' => 'Método HTTP no permitido.',
+                'meta' => [],
+            ]);
+    }
+
     public function test_login_is_rate_limited_with_a_standardized_response(): void
     {
         for ($attempt = 0; $attempt < 6; $attempt++) {

@@ -31,12 +31,14 @@ class MenuDiaPolicy
 
     public function update(Usuario $usuario, MenuDia $menuDia): bool
     {
-        return $this->isStaff($usuario);
+        return $this->isStaff($usuario)
+            && $menuDia->estado === EstadoMenuDiaEnum::BORRADOR;
     }
 
     public function publish(Usuario $usuario, MenuDia $menuDia): bool
     {
-        return $this->isStaff($usuario);
+        return $this->isStaff($usuario)
+            && $menuDia->estado === EstadoMenuDiaEnum::BORRADOR;
     }
 
     public function delete(Usuario $usuario, MenuDia $menuDia): bool

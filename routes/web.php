@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MenuDiaController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReservationController;
@@ -39,5 +40,11 @@ Route::middleware(['auth', 'role:ADMINISTRADOR,OPERADOR,CLIENTE'])->group(functi
         ->only(['index', 'create', 'store', 'edit', 'update'])
         ->parameters(['productos' => 'producto'])
         ->names('products');
+    Route::patch('/menus/{menuDia}/publicar', [MenuDiaController::class, 'publish'])
+        ->name('menus.publish');
+    Route::resource('/menus', MenuDiaController::class)
+        ->only(['index', 'create', 'store', 'show', 'edit', 'update'])
+        ->parameters(['menus' => 'menuDia'])
+        ->names('menus');
     Route::post('/logout', LogoutController::class)->name('logout');
 });

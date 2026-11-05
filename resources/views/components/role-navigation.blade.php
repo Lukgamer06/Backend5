@@ -16,6 +16,8 @@
                     <a class="nav-link" href="{{ route('orders.index') }}">{{ $module }}</a>
                 @elseif ($module === 'Productos')
                     <a class="nav-link" href="{{ route('products.index') }}">{{ $module }}</a>
+                @elseif ($module === 'Menú del día')
+                    <a class="nav-link" href="{{ route('menus.index') }}">{{ $module }}</a>
                 @else
                     <span class="nav-link text-body-secondary" aria-disabled="true">{{ $module }}</span>
                 @endif

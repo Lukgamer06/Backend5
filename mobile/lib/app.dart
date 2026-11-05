@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
+import 'core/network/api_client.dart';
+import 'core/network/api_config.dart';
 import 'routes/app_router.dart';
 
 class HostalConnectApp extends StatelessWidget {
@@ -21,6 +23,19 @@ class HostalConnectApp extends StatelessWidget {
         Provider<http.Client>(
           create: (_) => http.Client(),
           dispose: (_, client) => client.close(),
+        ),
+        Provider<ApiConfig>(create: (_) => ApiConfig.fromEnvironment()),
+        Provider<ApiClient>(
+          create: (context) {
+            final secureStorage = context.read<FlutterSecureStorage>();
+
+            return ApiClient(
+              config: context.read<ApiConfig>(),
+              httpClient: context.read<http.Client>(),
+              accessTokenProvider: () =>
+                  secureStorage.read(key: ApiClient.accessTokenStorageKey),
+            );
+          },
         ),
       ],
       child: MaterialApp.router(

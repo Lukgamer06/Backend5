@@ -52,6 +52,10 @@
                         @endauth
                     </header>
 
+                    @auth
+                        @include('components.role-navigation')
+                    @endauth
+
                     @if (session('status'))
                         <div class="alert alert-success" role="status">
                             {{ session('status') }}

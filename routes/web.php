@@ -13,7 +13,7 @@ Route::middleware('guest')->group(function (): void {
         ->name('login.store');
 });
 
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['auth', 'role:ADMINISTRADOR,OPERADOR,CLIENTE'])->group(function (): void {
     Route::get('/', [LoginController::class, 'home'])->name('home');
     Route::post('/logout', LogoutController::class)->name('logout');
 });

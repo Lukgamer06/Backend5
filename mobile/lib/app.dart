@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
@@ -6,12 +8,13 @@ import 'package:provider/provider.dart';
 
 import 'core/network/api_client.dart';
 import 'core/network/api_config.dart';
+import 'core/storage/token_storage.dart';
+import 'features/auth/providers/auth_controller.dart';
+import 'features/auth/repositories/auth_repository.dart';
 import 'routes/app_router.dart';
 
 class HostalConnectApp extends StatelessWidget {
   const HostalConnectApp({super.key});
-
-  static final GoRouter _router = createAppRouter();
 
   @override
   Widget build(BuildContext context) {
@@ -25,26 +28,53 @@ class HostalConnectApp extends StatelessWidget {
           dispose: (_, client) => client.close(),
         ),
         Provider<ApiConfig>(create: (_) => ApiConfig.fromEnvironment()),
+        Provider<TokenStorage>(
+          create: (context) =>
+              SecureTokenStorage(context.read<FlutterSecureStorage>()),
+        ),
         Provider<ApiClient>(
           create: (context) {
-            final secureStorage = context.read<FlutterSecureStorage>();
+            final tokenStorage = context.read<TokenStorage>();
 
             return ApiClient(
               config: context.read<ApiConfig>(),
               httpClient: context.read<http.Client>(),
-              accessTokenProvider: () =>
-                  secureStorage.read(key: ApiClient.accessTokenStorageKey),
+              accessTokenProvider: tokenStorage.readToken,
+              unauthorizedHandler: () =>
+                  context.read<AuthController>().handleUnauthorized(),
             );
           },
         ),
-      ],
-      child: MaterialApp.router(
-        title: 'HostalConnect UNAB',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00529B)),
-          useMaterial3: true,
+        Provider<AuthRepository>(
+          create: (context) => ApiAuthRepository(
+            apiClient: context.read<ApiClient>(),
+            tokenStorage: context.read<TokenStorage>(),
+          ),
         ),
-        routerConfig: _router,
+        ChangeNotifierProvider<AuthController>(
+          create: (context) {
+            final controller = AuthController(context.read<AuthRepository>());
+            unawaited(controller.restoreSession());
+
+            return controller;
+          },
+        ),
+        Provider<GoRouter>(
+          create: (context) => createAppRouter(context.read<AuthController>()),
+          dispose: (_, router) => router.dispose(),
+        ),
+      ],
+      child: Builder(
+        builder: (context) => MaterialApp.router(
+          title: 'HostalConnect UNAB',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF00529B),
+            ),
+            useMaterial3: true,
+          ),
+          routerConfig: context.watch<GoRouter>(),
+        ),
       ),
     );
   }

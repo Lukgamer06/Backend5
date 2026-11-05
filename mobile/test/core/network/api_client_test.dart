@@ -144,6 +144,28 @@ void main() {
         ),
       );
     });
+
+    test('notifies the session handler when the API returns 401', () async {
+      var unauthorizedCalls = 0;
+      final client = _FakeHttpClient(
+        (request) async => _jsonResponse({
+          'data': null,
+          'message': 'No autenticado.',
+          'meta': {},
+        }, statusCode: 401),
+      );
+      final apiClient = ApiClient(
+        config: const ApiConfig(baseUrl: 'https://api.example.test'),
+        httpClient: client,
+        unauthorizedHandler: () async {
+          unauthorizedCalls++;
+        },
+      );
+
+      await expectLater(apiClient.get('me'), throwsA(isA<ApiException>()));
+
+      expect(unauthorizedCalls, 1);
+    });
   });
 }
 

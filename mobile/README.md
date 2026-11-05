@@ -23,6 +23,10 @@ La URL base se configura al compilar con `--dart-define=API_BASE_URL=...`. El va
 
 El cliente agrega `Accept: application/json`, serializa cuerpos como JSON y lee el token opcional de `flutter_secure_storage` mediante un callback asíncrono. El token usa la clave `sanctum_access_token`. Las respuestas de error se transforman en `ApiException` sin exponer detalles del servidor en errores 5xx.
 
-La ruta raíz no dibuja interfaz; no hay pantallas ni flujos de autenticación en esta fase.
+## Autenticación
+
+El inicio de sesión usa `POST /api/v1/login` con `correo` y `password`. El token Sanctum se guarda únicamente en el almacenamiento seguro; las credenciales no se persisten. Al abrir la app se consulta `GET /api/v1/me` para restaurar la sesión. El cierre usa `POST /api/v1/logout` y elimina el token local incluso si la API no está disponible. Las respuestas 401 invalidan la sesión y redirigen al login.
+
+La ruta `/` requiere una sesión autenticada. La pantalla inicial muestra el perfil autenticado como destino temporal hasta que se implementen los módulos funcionales.
 
 El repositorio API y Flutter comparten el mismo proyecto Git, pero el código móvil vive aislado en `mobile/`.

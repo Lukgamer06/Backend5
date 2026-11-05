@@ -8,12 +8,14 @@ import 'api_config.dart';
 import 'api_exception.dart';
 
 typedef AccessTokenProvider = Future<String?> Function();
+typedef UnauthorizedHandler = Future<void> Function();
 
 class ApiClient {
   ApiClient({
     required this._config,
     required this._httpClient,
     this._accessTokenProvider,
+    this._unauthorizedHandler,
   });
 
   static const accessTokenStorageKey = 'sanctum_access_token';
@@ -21,6 +23,7 @@ class ApiClient {
   final ApiConfig _config;
   final http.Client _httpClient;
   final AccessTokenProvider? _accessTokenProvider;
+  final UnauthorizedHandler? _unauthorizedHandler;
 
   Future<Map<String, dynamic>> get(
     String path, {
@@ -77,6 +80,10 @@ class ApiClient {
       final response = await http.Response.fromStream(
         streamedResponse,
       ).timeout(_config.requestTimeout);
+
+      if (response.statusCode == 401) {
+        await _unauthorizedHandler?.call();
+      }
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw ApiException.fromResponse(response);

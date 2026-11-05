@@ -1,0 +1,899 @@
+{
+  "info": {
+    "_postman_id": "bd447478-786a-4b79-9a7f-531b4d7b0041",
+    "name": "HostalConnect UNAB - API v1",
+    "description": "Colección de la API REST versionada de HostalConnect UNAB. Configura el entorno Local, ejecuta Iniciar sesión y el token Sanctum se guardará automáticamente en accessToken. Todas las rutas, excepto login, requieren Bearer token. Las respuestas de ejemplo son representativas; los IDs y datos deben existir en el entorno de ejecución.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "correo",
+      "value": "admin@hostalconnect.test",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reservaId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "pedidoId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "productoId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "menuDiaId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "incidenciaId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "pagoId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "payment-request-001",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (pm.info.requestName === 'Iniciar sesión' && pm.response.code === 200) {",
+          "  const response = pm.response.json();",
+          "  if (response.data && response.data.access_token) {",
+          "    pm.environment.set('accessToken', response.data.access_token);",
+          "  }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Iniciar sesión",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correo}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/login",
+            "description": "Inicia sesión y almacena data.access_token en accessToken. La ruta permite hasta 6 solicitudes por minuto."
+          },
+          "response": [
+            {
+              "name": "200 - Autenticación exitosa",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"usuario\": {\n      \"id\": 1,\n      \"nombres\": \"Ana\",\n      \"apellidos\": \"Administradora\",\n      \"correo\": \"admin@hostalconnect.test\",\n      \"telefono\": null,\n      \"rol\": \"ADMINISTRADOR\"\n    },\n    \"access_token\": \"1|token-ejemplo\",\n    \"token_type\": \"Bearer\"\n  },\n  \"message\": \"Autenticación exitosa.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "401 - Credenciales inválidas",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "body": "{\n  \"data\": null,\n  \"message\": \"No autenticado.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "422 - Validación",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=UTF-8"
+                }
+              ],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Los datos enviados no son válidos.\",\n  \"meta\": {\n    \"errors\": {\n      \"correo\": [\"El correo es obligatorio.\"]\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cerrar sesión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/logout"
+          },
+          "response": [
+            {
+              "name": "200 - Sesión cerrada",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"logged_out\": true},\n  \"message\": \"Sesión cerrada correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Usuario autenticado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/me"
+          },
+          "response": [
+            {
+              "name": "200 - Usuario autenticado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\n    \"usuario\": {\"id\": 1, \"nombres\": \"Ana\", \"apellidos\": \"Administradora\", \"correo\": \"admin@hostalconnect.test\", \"telefono\": null, \"rol\": \"ADMINISTRADOR\"}\n  },\n  \"message\": \"Usuario autenticado.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "401 - No autenticado",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"No autenticado.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Incidencias",
+      "item": [
+        {
+          "name": "Listar incidencias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/incidencias?prioridad=ALTA&estado=ABIERTA&per_page=15",
+            "description": "Solo ADMINISTRADOR y OPERADOR. Filtros opcionales: search, prioridad, estado, page, per_page."
+          },
+          "response": [
+            {
+              "name": "200 - Colección paginada",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": [{\"id\": 1, \"usuario_reporta_id\": 2, \"mesa_id\": null, \"pedido_id\": null, \"titulo\": \"Falla eléctrica\", \"descripcion\": \"La iluminación dejó de funcionar.\", \"prioridad\": \"ALTA\", \"estado\": \"ABIERTA\", \"usuario\": {\"id\": 2, \"nombres\": \"Luis\", \"apellidos\": \"Operador\", \"correo\": \"operador@hostalconnect.test\", \"telefono\": null, \"rol\": \"OPERADOR\"}}],\n  \"links\": {\"first\": \"{{baseUrl}}/api/v1/incidencias?page=1\", \"last\": \"{{baseUrl}}/api/v1/incidencias?page=1\", \"prev\": null, \"next\": null},\n  \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"path\": \"{{baseUrl}}/api/v1/incidencias\", \"per_page\": 15, \"to\": 1, \"total\": 1},\n  \"message\": \"Incidencias consultadas correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Reportar incidencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Falla eléctrica\",\n  \"descripcion\": \"La iluminación del pasillo dejó de funcionar.\",\n  \"prioridad\": \"MEDIA\",\n  \"mesa_id\": null,\n  \"pedido_id\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/incidencias",
+            "description": "Solo ADMINISTRADOR y OPERADOR. usuario_reporta_id y estado los asigna el servidor; no deben enviarse."
+          },
+          "response": [
+            {
+              "name": "403 - Acceso denegado",
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Acceso denegado.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "422 - Campos controlados por servidor",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Los datos enviados no son válidos.\",\n  \"meta\": {\n    \"errors\": {\n      \"estado\": [\"The estado field is prohibited.\"]\n    }\n  }\n}"
+            },
+            {
+              "name": "201 - Incidencia reportada",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_reporta_id\": 2, \"mesa_id\": null, \"pedido_id\": null, \"titulo\": \"Falla eléctrica\", \"descripcion\": \"La iluminación del pasillo dejó de funcionar.\", \"prioridad\": \"MEDIA\", \"estado\": \"ABIERTA\", \"usuario\": {\"id\": 2, \"nombres\": \"Luis\", \"apellidos\": \"Operador\", \"correo\": \"operador@hostalconnect.test\", \"telefono\": null, \"rol\": \"OPERADOR\"}},\n  \"message\": \"Incidencia reportada correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar incidencia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EN_ATENCION\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/incidencias/{{incidenciaId}}",
+            "description": "Solo ADMINISTRADOR y OPERADOR. Se puede enviar estado, prioridad o ambos."
+          },
+          "response": [
+            {
+              "name": "200 - Incidencia actualizada",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_reporta_id\": 2, \"mesa_id\": null, \"pedido_id\": null, \"titulo\": \"Falla eléctrica\", \"descripcion\": \"La iluminación dejó de funcionar.\", \"prioridad\": \"MEDIA\", \"estado\": \"EN_ATENCION\", \"usuario\": {\"id\": 2, \"nombres\": \"Luis\", \"apellidos\": \"Operador\", \"correo\": \"operador@hostalconnect.test\", \"telefono\": null, \"rol\": \"OPERADOR\"}},\n  \"message\": \"Incidencia actualizada correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reservas",
+      "item": [
+        {
+          "name": "Listar reservas",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/reservas?estado=CONFIRMADA&per_page=15",
+            "description": "Los clientes solo consultan sus reservas. Filtros opcionales: search, estado, fecha_desde, fecha_hasta, page, per_page."
+          },
+          "response": [
+            {
+              "name": "200 - Colección paginada",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": [{\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"mesa_id\": 1, \"fecha_inicio\": \"2026-12-10T18:00:00-05:00\", \"fecha_fin\": \"2026-12-10T19:00:00-05:00\", \"numero_personas\": 2, \"estado\": \"CONFIRMADA\", \"observaciones\": null, \"usuario\": null, \"cliente\": null}],\n  \"links\": {\"first\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"last\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"prev\": null, \"next\": null},\n  \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"path\": \"{{baseUrl}}/api/v1/reservas\", \"per_page\": 15, \"to\": 1, \"total\": 1},\n  \"message\": \"Reservas consultadas correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar reserva",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/reservas/{{reservaId}}"
+          },
+          "response": [
+            {
+              "name": "200 - Reserva consultada",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"mesa_id\": 1, \"fecha_inicio\": \"2026-12-10T18:00:00-05:00\", \"fecha_fin\": \"2026-12-10T19:00:00-05:00\", \"numero_personas\": 2, \"estado\": \"CONFIRMADA\", \"observaciones\": null, \"usuario\": null, \"cliente\": null},\n  \"message\": \"Solicitud exitosa.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "403 - Propiedad no autorizada",
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Acceso denegado.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "404 - Reserva no encontrada",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Recurso no encontrado.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Crear reserva",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mesa_id\": 1,\n  \"fecha_inicio\": \"2026-12-10T18:00\",\n  \"fecha_fin\": \"2026-12-10T19:00\",\n  \"numero_personas\": 2,\n  \"observaciones\": \"Mesa junto a la ventana\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/v1/reservas",
+            "description": "El cliente autenticado reserva para su propia ficha. ADMINISTRADOR/OPERADOR deben enviar cliente_id. Fechas con formato Y-m-dTH:i."
+          },
+          "response": [
+            {
+              "name": "409 - Conflicto de disponibilidad",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"La reserva entra en conflicto con la disponibilidad de la mesa.\",\n  \"meta\": {\n    \"errors\": {\n      \"mesa_id\": [\"La mesa ya tiene una reserva en el horario seleccionado.\"]\n    }\n  }\n}"
+            },
+            {
+              "name": "422 - Validación",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Los datos enviados no son válidos.\",\n  \"meta\": {\"errors\": {\"fecha_fin\": [\"La fecha de fin debe ser posterior a la fecha de inicio.\"]}}\n}"
+            },
+            {
+              "name": "201 - Reserva creada",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"mesa_id\": 1, \"fecha_inicio\": \"2026-12-10T18:00:00-05:00\", \"fecha_fin\": \"2026-12-10T19:00:00-05:00\", \"numero_personas\": 2, \"estado\": \"CONFIRMADA\", \"observaciones\": \"Mesa junto a la ventana\", \"usuario\": null, \"cliente\": null},\n  \"message\": \"Reserva creada correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar reserva",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observaciones\": \"Llegaremos 10 minutos antes\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/v1/reservas/{{reservaId}}",
+            "description": "Actualización parcial. Solo ADMINISTRADOR y OPERADOR pueden modificar reservas."
+          },
+          "response": [
+            {
+              "name": "200 - Reserva actualizada",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"mesa_id\": 1, \"fecha_inicio\": \"2026-12-10T18:00:00-05:00\", \"fecha_fin\": \"2026-12-10T19:00:00-05:00\", \"numero_personas\": 2, \"estado\": \"CONFIRMADA\", \"observaciones\": \"Llegaremos 10 minutos antes\", \"usuario\": null, \"cliente\": null},\n  \"message\": \"Reserva actualizada correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cancelar reserva",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/reservas/{{reservaId}}/cancelacion",
+            "description": "El cliente propietario o personal autorizado puede cancelar. Una reserva finalizada no puede cancelarse."
+          },
+          "response": [
+            {
+              "name": "200 - Reserva cancelada",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"mesa_id\": 1, \"fecha_inicio\": \"2026-12-10T18:00:00-05:00\", \"fecha_fin\": \"2026-12-10T19:00:00-05:00\", \"numero_personas\": 2, \"estado\": \"CANCELADA\", \"observaciones\": null, \"usuario\": null, \"cliente\": null},\n  \"message\": \"Reserva cancelada correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pedidos y pagos",
+      "item": [
+        {
+          "name": "Listar pedidos",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/pedidos?estado=REGISTRADO&per_page=15",
+            "description": "Los clientes solo consultan sus pedidos. Filtros opcionales: search, estado, tipo_atencion, fecha_desde, fecha_hasta, page, per_page."
+          },
+          "response": [
+            {
+              "name": "200 - Colección paginada",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": [{\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"reserva_id\": null, \"mesa_id\": null, \"tipo_atencion\": \"INMEDIATO\", \"modalidad_servicio\": \"SIN_MESA\", \"estado\": \"REGISTRADO\", \"fecha_programada\": null, \"total\": \"25.00\", \"cliente\": null, \"detalles\": [], \"pagos\": []}],\n  \"links\": {\"first\": \"{{baseUrl}}/api/v1/pedidos?page=1\", \"last\": \"{{baseUrl}}/api/v1/pedidos?page=1\", \"prev\": null, \"next\": null},\n  \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"path\": \"{{baseUrl}}/api/v1/pedidos\", \"per_page\": 15, \"to\": 1, \"total\": 1},\n  \"message\": \"Pedidos consultados correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar pedido",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}"
+          },
+          "response": [
+            {
+              "name": "200 - Pedido consultado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"reserva_id\": null, \"mesa_id\": null, \"tipo_atencion\": \"INMEDIATO\", \"modalidad_servicio\": \"SIN_MESA\", \"estado\": \"REGISTRADO\", \"fecha_programada\": null, \"total\": \"25.00\", \"cliente\": null, \"detalles\": [], \"pagos\": []},\n  \"message\": \"Solicitud exitosa.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Crear pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo_atencion\": \"INMEDIATO\",\n  \"modalidad_servicio\": \"SIN_MESA\",\n  \"lineas\": [\n    {\"producto_id\": 1, \"cantidad\": 2, \"observaciones\": null}\n  ]\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/v1/pedidos",
+            "description": "El total, estado y usuario se calculan/asignan en servidor. Personal debe indicar cliente_id. No envíe usuario_id, estado ni total."
+          },
+          "response": [
+            {
+              "name": "422 - Validación",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Los datos enviados no son válidos.\",\n  \"meta\": {\"errors\": {\"lineas.0.producto_id\": [\"El producto seleccionado no está disponible.\"]}}\n}"
+            },
+            {
+              "name": "201 - Pedido creado",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"reserva_id\": null, \"mesa_id\": null, \"tipo_atencion\": \"INMEDIATO\", \"modalidad_servicio\": \"SIN_MESA\", \"estado\": \"REGISTRADO\", \"fecha_programada\": null, \"total\": \"25.00\", \"cliente\": null, \"detalles\": [{\"id\": 1, \"producto_id\": 1, \"cantidad\": 2, \"precio_unitario\": \"12.50\", \"subtotal\": \"25.00\", \"observaciones\": null, \"producto\": null}], \"pagos\": []},\n  \"message\": \"Pedido creado correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar pedido",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo_atencion\": \"PROGRAMADO\",\n  \"fecha_programada\": \"2026-12-10T18:00\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}",
+            "description": "Actualización parcial, solo para ADMINISTRADOR/OPERADOR y pedidos sin pagos asociados."
+          },
+          "response": [
+            {
+              "name": "200 - Pedido actualizado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"reserva_id\": null, \"mesa_id\": null, \"tipo_atencion\": \"PROGRAMADO\", \"modalidad_servicio\": \"SIN_MESA\", \"estado\": \"REGISTRADO\", \"fecha_programada\": \"2026-12-10T18:00:00-05:00\", \"total\": \"25.00\", \"cliente\": null, \"detalles\": [], \"pagos\": []},\n  \"message\": \"Pedido actualizado correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cancelar pedido",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/cancelacion",
+            "description": "El cliente propietario puede cancelar un pedido REGISTRADO sin pagos asociados; el personal tiene permisos según la transición de estado."
+          },
+          "response": [
+            {
+              "name": "200 - Pedido cancelado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"reserva_id\": null, \"mesa_id\": null, \"tipo_atencion\": \"INMEDIATO\", \"modalidad_servicio\": \"SIN_MESA\", \"estado\": \"CANCELADO\", \"fecha_programada\": null, \"total\": \"25.00\", \"cliente\": null, \"detalles\": [], \"pagos\": []},\n  \"message\": \"Pedido cancelado correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cambiar estado del pedido",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EN_PREPARACION\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/estado",
+            "description": "Solo ADMINISTRADOR/OPERADOR. El servidor valida transiciones permitidas."
+          },
+          "response": [
+            {
+              "name": "409 - Transición inválida",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"El estado del pedido no permite la transición solicitada.\",\n  \"meta\": {\"errors\": {\"estado\": [\"La transición de estado solicitada no está permitida.\"]}}\n}"
+            },
+            {
+              "name": "200 - Estado actualizado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"reserva_id\": null, \"mesa_id\": null, \"tipo_atencion\": \"INMEDIATO\", \"modalidad_servicio\": \"SIN_MESA\", \"estado\": \"EN_PREPARACION\", \"fecha_programada\": null, \"total\": \"25.00\", \"cliente\": null, \"detalles\": [], \"pagos\": []},\n  \"message\": \"Estado del pedido actualizado correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar pagos del pedido",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagos",
+            "description": "El propietario del pedido y el personal autorizado pueden consultar los pagos asociados."
+          },
+          "response": [
+            {
+              "name": "200 - Pagos del pedido",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": [{\"id\": 1, \"pedido_id\": 1, \"monto\": \"25.00\", \"canal\": \"EN_LINEA\", \"estado\": \"PENDIENTE\", \"referencia_operacion\": \"uuid-generado-por-el-servidor\"}],\n  \"links\": {},\n  \"message\": \"Pagos del pedido consultados correctamente.\",\n  \"meta\": {\"count\": 1}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Registrar pago en línea",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Idempotency-Key", "value": "{{idempotencyKey}}"}
+            ],
+            "url": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagos/enlinea",
+            "description": "No integra una pasarela ni confirma el cobro: el pago queda PENDIENTE. Monto y canal los determina el servidor. Cambia idempotencyKey para una nueva operación y conserva la misma clave para reintentarla. Una clave igual para otro pedido/canal devuelve 409."
+          },
+          "response": [
+            {
+              "name": "201 - Pago pendiente",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"pedido_id\": 1,\n    \"monto\": \"25.00\",\n    \"canal\": \"EN_LINEA\",\n    \"estado\": \"PENDIENTE\",\n    \"referencia_operacion\": \"uuid-generado-por-el-servidor\"\n  },\n  \"message\": \"Solicitud de pago en línea registrada pendiente de procesamiento.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "409 - Conflicto de idempotencia",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"La clave de idempotencia ya fue utilizada para otro pedido o canal.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "422 - Falta Idempotency-Key",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Los datos enviados no son válidos.\",\n  \"meta\": {\"errors\": {\"idempotency_key\": [\"The idempotency key field is required.\"]}}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Registrar pago presencial",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Idempotency-Key", "value": "{{idempotencyKey}}"}
+            ],
+            "url": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagos/presenciales",
+            "description": "Registra el pago en estado PENDIENTE de confirmación. Requiere Idempotency-Key. Cambia idempotencyKey para una nueva operación y conserva la misma clave para reintentarla."
+          },
+          "response": [
+            {
+              "name": "201 - Pago presencial pendiente",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"pedido_id\": 1, \"monto\": \"25.00\", \"canal\": \"PRESENCIAL\", \"estado\": \"PENDIENTE\", \"referencia_operacion\": \"uuid-generado-por-el-servidor\"},\n  \"message\": \"Pago presencial registrado pendiente de confirmación.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar pago",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/pagos/{{pagoId}}",
+            "description": "La policy actual permite la consulta individual solo al ADMINISTRADOR."
+          },
+          "response": [
+            {
+              "name": "200 - Pago consultado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"pedido_id\": 1, \"monto\": \"25.00\", \"canal\": \"EN_LINEA\", \"estado\": \"PENDIENTE\", \"referencia_operacion\": \"uuid-generado-por-el-servidor\"},\n  \"message\": \"Solicitud exitosa.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "Listar productos",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/productos?search=&per_page=15",
+            "description": "Solo muestra productos disponibles a OPERADOR/CLIENTE. El filtro disponible=0|1 es exclusivo de ADMINISTRADOR."
+          },
+          "response": [
+            {
+              "name": "200 - Colección paginada",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": [{\"id\": 1, \"nombre\": \"Desayuno continental\", \"descripcion\": \"Pan, café y fruta\", \"precio\": \"12.50\", \"disponible\": true}],\n  \"links\": {\"first\": \"{{baseUrl}}/api/v1/productos?page=1\", \"last\": \"{{baseUrl}}/api/v1/productos?page=1\", \"prev\": null, \"next\": null},\n  \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"path\": \"{{baseUrl}}/api/v1/productos\", \"per_page\": 15, \"to\": 1, \"total\": 1},\n  \"message\": \"Productos consultados correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar producto",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/productos/{{productoId}}",
+            "description": "Los productos no disponibles se exponen solo a ADMINISTRADOR; para otros roles se devuelve 404."
+          },
+          "response": [
+            {
+              "name": "404 - Producto no visible o inexistente",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Recurso no encontrado.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "200 - Producto consultado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"nombre\": \"Desayuno continental\", \"descripcion\": \"Pan, café y fruta\", \"precio\": \"12.50\", \"disponible\": true},\n  \"message\": \"Solicitud exitosa.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Menú del día",
+      "item": [
+        {
+          "name": "Consultar menú de hoy",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/menus-dia/actual"
+          },
+          "response": [
+            {
+              "name": "200 - Menú publicado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"fecha\": \"2026-11-05\", \"estado\": \"PUBLICADO\", \"productos\": [{\"id\": 1, \"nombre\": \"Desayuno continental\", \"descripcion\": \"Pan, café y fruta\", \"precio\": \"12.50\", \"disponible\": true}]},\n  \"message\": \"Menú del día consultado correctamente.\",\n  \"meta\": {}\n}"
+            },
+            {
+              "name": "404 - Menú no publicado para hoy",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Recurso no encontrado.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Crear borrador del menú",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha\": \"2026-12-10\",\n  \"productos\": [1, 2]\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/v1/menus-dia",
+            "description": "Solo ADMINISTRADOR/OPERADOR. La fecha debe ser única; productos son IDs existentes y distintos."
+          },
+          "response": [
+            {
+              "name": "201 - Menú guardado como borrador",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"fecha\": \"2026-12-10\", \"estado\": \"BORRADOR\", \"productos\": [{\"id\": 1, \"nombre\": \"Desayuno continental\", \"descripcion\": \"Pan, café y fruta\", \"precio\": \"12.50\", \"disponible\": true}]},\n  \"message\": \"Menú guardado como borrador.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar borrador del menú",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productos\": [1, 2, 3]\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/v1/menus-dia/{{menuDiaId}}"
+          },
+          "response": [
+            {
+              "name": "200 - Borrador actualizado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"fecha\": \"2026-12-10\", \"estado\": \"BORRADOR\", \"productos\": [{\"id\": 1, \"nombre\": \"Desayuno continental\", \"descripcion\": \"Pan, café y fruta\", \"precio\": \"12.50\", \"disponible\": true}]},\n  \"message\": \"Borrador del menú actualizado correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Publicar menú",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/menus-dia/{{menuDiaId}}/publicacion",
+            "description": "Solo ADMINISTRADOR/OPERADOR. El menú debe estar en borrador y contener productos."
+          },
+          "response": [
+            {
+              "name": "200 - Menú publicado",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": {\"id\": 1, \"fecha\": \"2026-12-10\", \"estado\": \"PUBLICADO\", \"productos\": [{\"id\": 1, \"nombre\": \"Desayuno continental\", \"descripcion\": \"Pan, café y fruta\", \"precio\": \"12.50\", \"disponible\": true}]},\n  \"message\": \"Menú publicado correctamente.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -36,6 +36,43 @@ flutter build appbundle --release --dart-define=APP_ENV=production --dart-define
 
 `API_BASE_URL` no es un secreto y debe apuntar al origen, sin ruta `/api/v1`, credenciales, query ni fragmento. No pases claves, contraseñas ni tokens mediante `--dart-define`.
 
+## Preparación de distribución Android e iOS
+
+Se incluyen proyectos nativos Flutter para Android e iOS. Ambos usan el identificador `co.edu.unab.hostalconnect` y muestran `HostalConnect UNAB`; se asumieron a partir del nombre y dominio institucional del proyecto. **Confirma el identificador con UNAB antes de la primera publicación:** Play Store y App Store lo tratan como identidad estable y no se debe cambiar después de distribuir. El ícono actual es el generado por Flutter y es solo temporal; sustitúyelo por los recursos oficiales aprobados para Android e iOS antes de publicar.
+
+La versión y el número de build salen de `version` en `pubspec.yaml`; incrementa el sufijo numérico (`+N`) en cada entrega a tiendas. Para Android, configura la firma de release con un keystore de upload fuera del repositorio. Genera uno en un lugar privado:
+
+```bash
+keytool -genkey -v -keystore /ruta-segura/hostalconnect-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias hostalconnect
+```
+
+En un equipo de desarrollo crea `android/key.properties` (ignorado por Git):
+
+```properties
+storeFile=/ruta-segura/hostalconnect-upload.jks
+storePassword=REEMPLAZAR_LOCALMENTE
+keyAlias=hostalconnect
+keyPassword=REEMPLAZAR_LOCALMENTE
+```
+
+En CI, configura en su lugar `ANDROID_KEYSTORE_PATH`, `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS` y `ANDROID_KEY_PASSWORD` como variables/secretos protegidos. `storeFile` puede ser una ruta absoluta. El build de release falla si la firma no está configurada y nunca usa la clave debug. Respalda el keystore de forma segura; no lo subas a Git ni lo pierdas.
+
+```bash
+flutter build appbundle --release \
+  --dart-define=APP_ENV=production \
+  --dart-define=API_BASE_URL=https://api.tu-dominio-real.edu.co
+```
+
+Para iOS se requiere macOS con Xcode, una cuenta Apple Developer y provisioning/signing team válido. Abre `ios/Runner.xcworkspace` en Xcode, selecciona el equipo de firma para Runner y RunnerTests y valida el bundle ID antes de archivar; después genera el archive o ejecuta:
+
+```bash
+flutter build ipa --release \
+  --dart-define=APP_ENV=production \
+  --dart-define=API_BASE_URL=https://api.tu-dominio-real.edu.co
+```
+
+El permiso de red es explícito. Android permite HTTP claro solo en variantes debug/profile para servidores locales; release exige TLS. iOS mantiene ATS y permite networking local para desarrollo, sin habilitar HTTP arbitrario. Estos archivos dejan preparada la configuración, pero los artefactos firmados y la publicación no se pueden validar desde Linux sin Android SDK/keystore o macOS/Xcode/cuenta Apple.
+
 El cliente agrega `Accept: application/json`, serializa cuerpos como JSON y lee el token opcional de `flutter_secure_storage` mediante un callback asíncrono. El token usa la clave `sanctum_access_token`. Las respuestas de error se transforman en `ApiException` sin exponer detalles del servidor en errores 5xx.
 
 ## Autenticación

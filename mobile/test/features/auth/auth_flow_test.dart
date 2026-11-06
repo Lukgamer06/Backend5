@@ -16,6 +16,9 @@ import 'package:hostalconnect_mobile/features/orders/providers/order_controller.
 import 'package:hostalconnect_mobile/features/orders/repositories/order_repository.dart';
 import 'package:hostalconnect_mobile/features/orders/screens/create_order_screen.dart';
 import 'package:hostalconnect_mobile/features/orders/screens/order_history_screen.dart';
+import 'package:hostalconnect_mobile/features/payments/models/payment.dart';
+import 'package:hostalconnect_mobile/features/payments/providers/payment_controller.dart';
+import 'package:hostalconnect_mobile/features/payments/repositories/payment_repository.dart';
 import 'package:hostalconnect_mobile/routes/app_router.dart';
 import 'package:provider/provider.dart';
 
@@ -77,6 +80,7 @@ void main() {
     final catalogController = CatalogController(_FakeCatalogRepository());
     await catalogController.load();
     final orderController = OrderController(_FakeOrderRepository());
+    final paymentController = PaymentController(_FakePaymentRepository());
     final router = createAppRouter(controller);
 
     await tester.pumpWidget(
@@ -86,7 +90,10 @@ void main() {
           value: catalogController,
           child: ChangeNotifierProvider<OrderController>.value(
             value: orderController,
-            child: MaterialApp.router(routerConfig: router),
+            child: ChangeNotifierProvider<PaymentController>.value(
+              value: paymentController,
+              child: MaterialApp.router(routerConfig: router),
+            ),
           ),
         ),
       ),
@@ -117,11 +124,22 @@ void main() {
     await tester.tap(find.text('Pedido #123 · Registrado'));
     await tester.pumpAndSettle();
     expect(find.text('Sopa del día'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('online-payment-123')));
+    await tester.tap(find.byKey(const Key('online-payment-123')));
+    await tester.pumpAndSettle();
+    expect(find.text('En línea · Pendiente'), findsOneWidget);
+    expect(
+      tester
+          .widget<OutlinedButton>(find.byKey(const Key('online-payment-123')))
+          .onPressed,
+      isNull,
+    );
 
     router.dispose();
     controller.dispose();
     catalogController.dispose();
     orderController.dispose();
+    paymentController.dispose();
   });
 
   testWidgets('unauthenticated users cannot remain on the protected route', (
@@ -254,6 +272,41 @@ class _FakeOrderRepository implements OrderRepository {
       lastPage: 1,
       total: 1,
     );
+  }
+}
+
+class _FakePaymentRepository implements PaymentRepository {
+  bool _hasPayment = false;
+
+  static const _payment = Payment(
+    id: 80,
+    orderId: 123,
+    amount: 12500,
+    channel: 'EN_LINEA',
+    status: 'PENDIENTE',
+    reference: 'reference-80',
+  );
+
+  @override
+  Future<List<Payment>> getForOrder(int orderId) async =>
+      _hasPayment ? const [_payment] : const [];
+
+  @override
+  Future<Payment> requestOnlinePayment(
+    int orderId,
+    String idempotencyKey,
+  ) async {
+    _hasPayment = true;
+    return _payment;
+  }
+
+  @override
+  Future<Payment> registerInPersonPayment(
+    int orderId,
+    String idempotencyKey,
+  ) async {
+    _hasPayment = true;
+    return _payment;
   }
 }
 

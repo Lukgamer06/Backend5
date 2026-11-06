@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../models/order.dart';
 import '../providers/order_controller.dart';
+import '../../payments/models/payment.dart';
+import '../../payments/providers/payment_controller.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -35,6 +37,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<OrderController>();
+    final paymentController = context.watch<PaymentController>();
 
     return Scaffold(
       appBar: AppBar(
@@ -108,6 +111,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           _OrderCard(
             order: order,
             isBusy: controller.isSubmitting,
+            paymentController: paymentController,
             onCancel: () => _confirmCancellation(context, controller, order),
           ),
         if (controller.totalOrders > 10)
@@ -175,11 +179,13 @@ class _OrderCard extends StatelessWidget {
   const _OrderCard({
     required this.order,
     required this.isBusy,
+    required this.paymentController,
     required this.onCancel,
   });
 
   final CustomerOrder order;
   final bool isBusy;
+  final PaymentController paymentController;
   final VoidCallback onCancel;
 
   @override
@@ -188,6 +194,11 @@ class _OrderCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ExpansionTile(
         key: ValueKey('order-${order.id}'),
+        onExpansionChanged: (expanded) {
+          if (expanded) {
+            paymentController.loadForOrder(order.id);
+          }
+        },
         title: Text('Pedido #${order.id} · ${_orderStatusLabel(order.status)}'),
         subtitle: Text(
           '${order.attentionType == 'PROGRAMADO' ? 'Programado' : 'Inmediato'} · ${_formatPrice(order.total)}',
@@ -207,6 +218,7 @@ class _OrderCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Text('Entrega programada: ${_formatDate(date)}'),
             ),
+          _PaymentSection(order: order, controller: paymentController),
           if (order.canRequestCancellation)
             Align(
               alignment: Alignment.centerRight,
@@ -221,6 +233,159 @@ class _OrderCard extends StatelessWidget {
     );
   }
 }
+
+class _PaymentSection extends StatelessWidget {
+  const _PaymentSection({required this.order, required this.controller});
+
+  final CustomerOrder order;
+  final PaymentController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final payments = controller.paymentsFor(order.id);
+    final isBusy = controller.isSubmitting(order.id);
+    final isPending = controller.hasPendingPayment(order.id);
+    final canSubmit =
+        controller.isLoaded(order.id) &&
+        !controller.isLoading(order.id) &&
+        !isBusy &&
+        !isPending;
+    final error = controller.errorFor(order.id);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Pagos', style: Theme.of(context).textTheme.titleMedium),
+              TextButton.icon(
+                key: Key('refresh-payments-${order.id}'),
+                onPressed: controller.isLoading(order.id)
+                    ? null
+                    : () => controller.loadForOrder(order.id),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Actualizar'),
+              ),
+            ],
+          ),
+          if (controller.isLoading(order.id))
+            const LinearProgressIndicator()
+          else if (error != null)
+            Text(
+              error,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            )
+          else if (payments.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text('Este pedido todavía no tiene pagos registrados.'),
+            )
+          else
+            for (final payment in payments) _PaymentTile(payment: payment),
+          if (isPending)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                'Hay un pago pendiente de confirmación. No envíes otra solicitud.',
+              ),
+            )
+          else if (error != null)
+            TextButton(
+              onPressed: isBusy
+                  ? null
+                  : () => controller.loadForOrder(order.id),
+              child: const Text('Reintentar consulta'),
+            )
+          else if (canSubmit) ...[
+            Wrap(
+              spacing: 8,
+              children: [
+                OutlinedButton(
+                  key: Key('online-payment-${order.id}'),
+                  onPressed: isBusy
+                      ? null
+                      : () => _submitPayment(
+                          context,
+                          controller.requestOnlinePayment(order.id),
+                        ),
+                  child: const Text('Solicitar pago en línea'),
+                ),
+                OutlinedButton(
+                  key: Key('in-person-payment-${order.id}'),
+                  onPressed: isBusy
+                      ? null
+                      : () => _submitPayment(
+                          context,
+                          controller.registerInPersonPayment(order.id),
+                        ),
+                  child: const Text('Registrar pago presencial'),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitPayment(
+    BuildContext context,
+    Future<Payment?> submission,
+  ) async {
+    final payment = await submission;
+    if (payment == null || !context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          payment.isPending
+              ? 'Solicitud registrada. El pago está pendiente de confirmación.'
+              : 'Pago registrado: ${_paymentStatusLabel(payment.status)}.',
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentTile extends StatelessWidget {
+  const _PaymentTile({required this.payment});
+
+  final Payment payment;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      title: Text(
+        '${_paymentChannelLabel(payment.channel)} · ${_paymentStatusLabel(payment.status)}',
+      ),
+      subtitle: Text('Referencia: ${payment.reference}'),
+      trailing: Text(_formatPrice(payment.amount)),
+    );
+  }
+}
+
+String _paymentChannelLabel(String channel) => switch (channel) {
+  'EN_LINEA' => 'En línea',
+  'PRESENCIAL' => 'Presencial',
+  _ => channel,
+};
+
+String _paymentStatusLabel(String status) => switch (status) {
+  'PENDIENTE' => 'Pendiente',
+  'APROBADO' => 'Aprobado',
+  'RECHAZADO' => 'Rechazado',
+  'EXPIRADO' => 'Expirado',
+  'CANCELADO' => 'Cancelado',
+  'REEMBOLSADO' => 'Reembolsado',
+  _ => status,
+};
 
 class _CenteredMessage extends StatelessWidget {
   const _CenteredMessage({required this.message, this.action});

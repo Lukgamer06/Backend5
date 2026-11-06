@@ -29,6 +29,6 @@ El inicio de sesión usa `POST /api/v1/login` con `correo` y `password`. El toke
 
 La ruta `/` requiere una sesión autenticada y muestra el catálogo permitido para el rol autenticado y el menú publicado para hoy. Los productos inactivos que pueda consultar un administrador se identifican como no disponibles. El catálogo acepta búsqueda y usa la paginación devuelta por Laravel. La falta de un menú publicado se presenta como estado vacío; otros errores conservan su mensaje y permiten reintentar.
 
-Los clientes pueden agregar productos disponibles al carrito, crear pedidos inmediatos o programados sin mesa, consultar sus pedidos paginados y solicitar la cancelación de pedidos registrados. El servidor calcula el total y autoriza cada cancelación; los pagos y la disponibilidad de mesas no se simulan en el cliente.
+Los clientes pueden agregar productos disponibles al carrito, crear pedidos inmediatos o programados sin mesa, consultar sus pedidos paginados y solicitar la cancelación de pedidos registrados. El servidor calcula el total y autoriza cada cancelación. Desde el detalle del pedido pueden consultar pagos y solicitar el registro de un pago en línea o presencial. Estas solicitudes requieren `Idempotency-Key`; el cliente reutiliza la clave al reintentar una operación fallida, muestra el estado devuelto por el servidor y no procesa tarjetas ni confirma pagos pendientes. La disponibilidad de mesas no se simula en el cliente.
 
 El repositorio API y Flutter comparten el mismo proyecto Git, pero el código móvil vive aislado en `mobile/`.

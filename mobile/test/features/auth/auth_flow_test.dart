@@ -7,6 +7,7 @@ import 'package:hostalconnect_mobile/features/auth/repositories/auth_repository.
 import 'package:hostalconnect_mobile/features/auth/screens/home_screen.dart';
 import 'package:hostalconnect_mobile/features/auth/screens/login_screen.dart';
 import 'package:hostalconnect_mobile/features/catalog/models/daily_menu.dart';
+import 'package:hostalconnect_mobile/features/catalog/models/menu_page.dart';
 import 'package:hostalconnect_mobile/features/catalog/models/product.dart';
 import 'package:hostalconnect_mobile/features/catalog/models/product_page.dart';
 import 'package:hostalconnect_mobile/features/catalog/providers/catalog_controller.dart';
@@ -233,6 +234,39 @@ class _FakeCatalogRepository implements CatalogRepository {
       ],
     );
   }
+
+  @override
+  Future<MenuPage> getMenus({
+    required int page,
+    required int perPage,
+    String? status,
+  }) async => const MenuPage(menus: [], currentPage: 1, lastPage: 1, total: 0);
+
+  @override
+  Future<List<Product>> getMenuProducts({String? search}) async => const [];
+
+  @override
+  Future<DailyMenu> createMenu({
+    required DateTime date,
+    required List<int> productIds,
+  }) async =>
+      DailyMenu(id: 1, date: date, status: 'BORRADOR', products: const []);
+
+  @override
+  Future<DailyMenu> updateMenu({
+    required int menuId,
+    required DateTime date,
+    required List<int> productIds,
+  }) async =>
+      DailyMenu(id: menuId, date: date, status: 'BORRADOR', products: const []);
+
+  @override
+  Future<DailyMenu> publishMenu(int menuId) async => DailyMenu(
+    id: menuId,
+    date: DateTime(2026, 11, 5),
+    status: 'PUBLICADO',
+    products: const [],
+  );
 }
 
 class _FakeOrderRepository implements OrderRepository {

@@ -45,6 +45,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('/productos', [ProductController::class, 'index'])->name('productos.index');
         Route::get('/productos/{producto}', [ProductController::class, 'show'])->name('productos.show');
 
+        Route::get('/menus-dia', [MenuDiaController::class, 'index'])->name('menus-dia.index');
         Route::get('/menus-dia/actual', [MenuDiaController::class, 'actual'])->name('menus-dia.actual');
         Route::post('/menus-dia', [MenuDiaController::class, 'store'])->name('menus-dia.store');
         Route::patch('/menus-dia/{menuDia}', [MenuDiaController::class, 'update'])->name('menus-dia.update');

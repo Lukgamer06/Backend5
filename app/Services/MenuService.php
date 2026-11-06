@@ -23,7 +23,7 @@ class MenuService
     ) {}
 
     /**
-     * @param  array{estado?: string, fecha_desde?: string, fecha_hasta?: string}  $filters
+     * @param  array{estado?: string, fecha_desde?: string, fecha_hasta?: string, per_page?: int}  $filters
      * @return LengthAwarePaginator<int, MenuDia>
      */
     public function paginate(Usuario $usuario, array $filters): LengthAwarePaginator

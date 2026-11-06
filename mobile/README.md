@@ -35,4 +35,6 @@ Los clientes también pueden consultar mesas disponibles por fecha, intervalo y 
 
 El personal (`ADMINISTRADOR` y `OPERADOR`) puede reportar incidencias, consultar la lista paginada con búsqueda y filtros de estado/prioridad, y actualizar su estado o prioridad. La política de la API autoriza estas operaciones; el cliente no envía el usuario reportante ni define el estado inicial.
 
+El personal también puede crear y editar borradores del menú del día, seleccionar productos disponibles y publicarlos. La app conserva en la edición los productos inactivos ya incluidos en un borrador, y el backend sigue validando fechas únicas, selecciones y publicación.
+
 El repositorio API y Flutter comparten el mismo proyecto Git, pero el código móvil vive aislado en `mobile/`.

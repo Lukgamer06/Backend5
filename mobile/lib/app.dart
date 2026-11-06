@@ -12,6 +12,7 @@ import 'core/storage/token_storage.dart';
 import 'features/auth/providers/auth_controller.dart';
 import 'features/auth/repositories/auth_repository.dart';
 import 'features/catalog/providers/catalog_controller.dart';
+import 'features/catalog/providers/menu_management_controller.dart';
 import 'features/catalog/repositories/catalog_repository.dart';
 import 'features/incidents/providers/incident_controller.dart';
 import 'features/incidents/repositories/incident_repository.dart';
@@ -94,6 +95,10 @@ class HostalConnectApp extends StatelessWidget {
 
             return controller;
           },
+        ),
+        ChangeNotifierProvider<MenuManagementController>(
+          create: (context) =>
+              MenuManagementController(context.read<CatalogRepository>()),
         ),
         ChangeNotifierProvider<IncidentController>(
           create: (context) =>

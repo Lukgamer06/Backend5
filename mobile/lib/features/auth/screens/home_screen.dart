@@ -48,6 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () => context.push('/incidencias'),
               icon: const Icon(Icons.report_problem_outlined),
             ),
+          if (user?.rol == 'ADMINISTRADOR' || user?.rol == 'OPERADOR')
+            IconButton(
+              key: const Key('manage-daily-menu'),
+              tooltip: 'Administrar menú del día',
+              onPressed: () => context.push('/menus/administrar'),
+              icon: const Icon(Icons.restaurant_menu),
+            ),
           IconButton(
             tooltip: 'Mis pedidos',
             onPressed: () => context.push('/pedidos'),

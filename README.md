@@ -135,3 +135,5 @@ La suite Laravel usa SQLite en memoria. El informe de integración registra una 
 - [Contrato y validación de API](./docs/api-v0.3-validation.md)
 
 No se ha certificado despliegue productivo, carga/estrés, firma/publicación en tiendas ni integración Flutter en vivo. Antes de desplegar, configura secretos fuera de Git, `APP_ENV=production`, `APP_DEBUG=false`, TLS, almacenamiento y backups, logs, scheduler/colas si aplican y ejecuta migraciones revisadas. Esta configuración Compose es para desarrollo local, no una arquitectura de producción.
+
+Consulta el [checklist de despliegue v1.0](./docs/deployment-checklist-v1.0.md) para hallazgos, criterios de salida y verificaciones pendientes antes de producción.

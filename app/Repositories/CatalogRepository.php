@@ -15,11 +15,14 @@ use RuntimeException;
 class CatalogRepository
 {
     /**
-     * @param  array{search?: string, disponible?: string}  $filters
+     * @param  array{search?: string, disponible?: string, per_page?: int}  $filters
      * @return LengthAwarePaginator<int, Producto>
      */
-    public function paginateFor(Usuario $usuario, array $filters): LengthAwarePaginator
-    {
+    public function paginateFor(
+        Usuario $usuario,
+        array $filters,
+        int $perPage = 15,
+    ): LengthAwarePaginator {
         return Producto::query()
             ->when(
                 $usuario->rol !== RolUsuarioEnum::ADMINISTRADOR,
@@ -31,7 +34,7 @@ class CatalogRepository
                     && $filters['disponible'] !== '',
                 fn (Builder $query): Builder => $query->where(
                     'disponible',
-                    $filters['disponible'] === '1',
+                    in_array($filters['disponible'], [true, 1, '1'], true),
                 ),
             )
             ->when(
@@ -43,8 +46,18 @@ class CatalogRepository
                 ),
             )
             ->orderBy('nombre')
-            ->paginate(15)
+            ->paginate($perPage)
             ->withQueryString();
+    }
+
+    public function findFor(Usuario $usuario, int $productoId): ?Producto
+    {
+        return Producto::query()
+            ->when(
+                $usuario->rol !== RolUsuarioEnum::ADMINISTRADOR,
+                fn (Builder $query): Builder => $query->where('disponible', true),
+            )
+            ->find($productoId);
     }
 
     public function find(int $productoId): ?Producto

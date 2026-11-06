@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Pago;
+use App\Models\Pedido;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use RuntimeException;
 
 class PaymentRepository
@@ -85,6 +87,22 @@ class PaymentRepository
             ->with(['pedido.cliente'])
             ->where('clave_idempotencia', $claveIdempotencia)
             ->first();
+    }
+
+    /**
+     * @return Collection<int, Pago>
+     */
+    public function forOrder(int $pedidoId): Collection
+    {
+        return Pago::query()
+            ->where('pedido_id', $pedidoId)
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    public function findOrderForUpdate(int $pedidoId): ?Pedido
+    {
+        return Pedido::query()->lockForUpdate()->find($pedidoId);
     }
 
     public function find(int $pagoId): ?Pago

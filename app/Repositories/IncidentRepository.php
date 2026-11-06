@@ -15,7 +15,7 @@ use RuntimeException;
 class IncidentRepository
 {
     /**
-     * @param  array{search?: string, prioridad?: string, estado?: string}  $filters
+     * @param  array{search?: string, prioridad?: string, estado?: string, per_page?: int}  $filters
      * @return LengthAwarePaginator<int, Incidencia>
      */
     public function paginate(array $filters): LengthAwarePaginator
@@ -42,7 +42,7 @@ class IncidentRepository
                 fn (Builder $query, string $estado): Builder => $query->where('estado', $estado),
             )
             ->orderByDesc('created_at')
-            ->paginate(15)
+            ->paginate($filters['per_page'] ?? 15)
             ->withQueryString();
     }
 

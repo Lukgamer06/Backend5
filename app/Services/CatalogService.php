@@ -17,12 +17,14 @@ class CatalogService
     ) {}
 
     /**
-     * @param  array{search?: string, disponible?: string}  $filters
+     * @param  array{search?: string, disponible?: string, per_page?: int}  $filters
      * @return LengthAwarePaginator<int, Producto>
      */
     public function paginate(Usuario $usuario, array $filters): LengthAwarePaginator
     {
-        return $this->catalogRepository->paginateFor($usuario, $filters);
+        $perPage = (int) ($filters['per_page'] ?? 15);
+
+        return $this->catalogRepository->paginateFor($usuario, $filters, $perPage);
     }
 
     /**
@@ -51,6 +53,11 @@ class CatalogService
     public function findProduct(int $productoId): ?Producto
     {
         return $this->catalogRepository->find($productoId);
+    }
+
+    public function findProductFor(Usuario $usuario, int $productoId): ?Producto
+    {
+        return $this->catalogRepository->findFor($usuario, $productoId);
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\EstadoOperativoMesaEnum;
 use App\Enums\EstadoReservaEnum;
 use App\Enums\RolUsuarioEnum;
 use App\Models\Cliente;
@@ -127,6 +128,28 @@ class ReservationRepository
     public function tables(): Collection
     {
         return Mesa::query()->orderBy('numero')->get();
+    }
+
+    /**
+     * @return Collection<int, Mesa>
+     */
+    public function availableTables(
+        DateTimeInterface $fechaInicio,
+        DateTimeInterface $fechaFin,
+        int $numeroPersonas,
+    ): Collection {
+        return Mesa::query()
+            ->where('estado_operativo', EstadoOperativoMesaEnum::HABILITADA->value)
+            ->where('capacidad', '>=', $numeroPersonas)
+            ->whereDoesntHave(
+                'reservas',
+                fn (Builder $query): Builder => $query
+                    ->where('estado', '!=', EstadoReservaEnum::CANCELADA->value)
+                    ->where('fecha_inicio', '<', $fechaFin)
+                    ->where('fecha_fin', '>', $fechaInicio),
+            )
+            ->orderBy('numero')
+            ->get();
     }
 
     public function hasConflict(

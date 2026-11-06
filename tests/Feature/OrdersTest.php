@@ -285,14 +285,17 @@ class OrdersTest extends TestCase
     public function test_order_filters_and_pagination_are_applied(): void
     {
         $operador = Usuario::factory()->operador()->create();
-        $cliente = Cliente::factory()->create();
+        $cliente = Cliente::factory()->create([
+            'nombres' => 'ClienteFiltroPedidoUnico',
+            'correo' => 'cliente-filtro-pedido@example.test',
+        ]);
         $product = Producto::factory()->create();
         $target = $this->createOrder($cliente, $product);
         Pedido::factory()->count(15)->create();
 
         $this->actingAs($operador)
             ->get(route('orders.index', [
-                'search' => (string) $target->id,
+                'search' => 'ClienteFiltroPedidoUnico',
                 'estado' => EstadoPedidoEnum::REGISTRADO->value,
                 'tipo_atencion' => TipoAtencionEnum::INMEDIATO->value,
                 'fecha_desde' => Carbon::now()->toDateString(),

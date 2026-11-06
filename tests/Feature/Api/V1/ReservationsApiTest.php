@@ -29,6 +29,7 @@ class ReservationsApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Reservas consultadas correctamente.')
             ->assertJsonPath('data.0.id', $propia->id)
+            ->assertJsonPath('data.0.mesa.numero', $propia->mesa->numero)
             ->assertJsonPath('meta.per_page', 1)
             ->assertJsonStructure(['data', 'links', 'meta', 'message']);
     }
@@ -76,6 +77,71 @@ class ReservationsApiTest extends TestCase
             'usuario_id' => $cliente->usuario_id,
             'mesa_id' => $mesa->id,
         ]);
+    }
+
+    public function test_customer_can_query_available_tables_for_a_time_and_party_size(): void
+    {
+        $cliente = Cliente::factory()->create();
+        $inicio = Carbon::now()->addDays(8)->startOfHour();
+        $mesaDisponible = Mesa::factory()->create(['capacidad' => 4]);
+        $mesaOcupada = Mesa::factory()->create(['capacidad' => 6]);
+        $mesaPequena = Mesa::factory()->create(['capacidad' => 2]);
+        $mesaMantenimiento = Mesa::factory()->mantenimiento()->create([
+            'capacidad' => 4,
+        ]);
+        $this->createReservation($cliente, $mesaOcupada, $inicio);
+
+        $this->withToken($cliente->usuario->createToken('reservation-test')->plainTextToken)
+            ->getJson('/api/v1/reservas/disponibilidad?'.http_build_query([
+                'fecha_inicio' => $inicio->format('Y-m-d\TH:i'),
+                'fecha_fin' => $inicio->copy()->addHour()->format('Y-m-d\TH:i'),
+                'numero_personas' => 3,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('message', 'Mesas disponibles consultadas correctamente.')
+            ->assertJsonPath('data.0.id', $mesaDisponible->id)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonStructure([
+                'data' => [['id', 'numero', 'capacidad']],
+                'links',
+                'meta',
+                'message',
+            ]);
+
+    }
+
+    public function test_availability_query_validates_dates_and_party_size(): void
+    {
+        $cliente = Cliente::factory()->create();
+
+        $this->withToken($cliente->usuario->createToken('reservation-test')->plainTextToken)
+            ->getJson('/api/v1/reservas/disponibilidad?'.http_build_query([
+                'fecha_inicio' => '2026-11-10 18:00',
+                'fecha_fin' => '2026-11-10T17:00',
+                'numero_personas' => 0,
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonPath('data', null)
+            ->assertJsonStructure([
+                'meta' => [
+                    'errors' => ['fecha_inicio', 'fecha_fin', 'numero_personas'],
+                ],
+            ]);
+    }
+
+    public function test_availability_query_requires_a_customer_who_can_create_reservations(): void
+    {
+        $this->getJson('/api/v1/reservas/disponibilidad')
+            ->assertUnauthorized();
+
+        $usuarioSinCliente = Usuario::factory()->create();
+        $this->withToken($usuarioSinCliente->createToken('reservation-test')->plainTextToken)
+            ->getJson('/api/v1/reservas/disponibilidad?'.http_build_query([
+                'fecha_inicio' => '2026-11-10T18:00',
+                'fecha_fin' => '2026-11-10T19:00',
+                'numero_personas' => 2,
+            ]))
+            ->assertForbidden();
     }
 
     public function test_store_rejects_protected_fields_with_a_standardized_validation_response(): void
@@ -182,15 +248,18 @@ class ReservationsApiTest extends TestCase
     private function createReservation(
         Cliente $cliente,
         ?Mesa $mesa = null,
+        ?Carbon $fechaInicio = null,
     ): Reserva {
-        $inicio = Carbon::now()->addDays(15)->startOfHour();
+        $inicio = $fechaInicio ?? Carbon::now()->addDays(15)->startOfHour();
+        $mesa ??= Mesa::factory()->create();
 
         return Reserva::factory()->create([
             'usuario_id' => $cliente->usuario_id,
             'cliente_id' => $cliente->id,
-            'mesa_id' => $mesa?->id ?? Mesa::factory()->create()->id,
+            'mesa_id' => $mesa->id,
             'fecha_inicio' => $inicio,
             'fecha_fin' => $inicio->copy()->addHour(),
+            'numero_personas' => min(2, $mesa->capacidad),
         ]);
     }
 }

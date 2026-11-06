@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Collection;
 
 abstract class TableRepository
 {
-    public function __construct() {}
-
     abstract public function find(int $mesaId): ?Mesa;
 
     /**

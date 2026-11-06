@@ -114,6 +114,34 @@ class CatalogAndMenuApiTest extends TestCase
             ->assertJsonPath('message', 'Recurso no encontrado.');
     }
 
+    public function test_staff_can_filter_and_paginate_drafts_and_customers_only_see_published_menus(): void
+    {
+        $operator = Usuario::factory()->operador()->create();
+        $customer = Usuario::factory()->cliente()->create();
+        $draft = MenuDia::factory()->create([
+            'fecha' => Carbon::today()->addDays(2)->toDateString(),
+        ]);
+        $published = MenuDia::factory()->publicado()->create([
+            'fecha' => Carbon::today()->addDays(3)->toDateString(),
+        ]);
+        $product = Producto::factory()->create();
+        $published->productos()->attach($product);
+        $this->actingAs($operator, 'sanctum')
+            ->getJson('/api/v1/menus-dia?estado=BORRADOR&per_page=1')
+            ->assertOk()
+            ->assertJsonPath('message', 'Menús del día consultados correctamente.')
+            ->assertJsonPath('data.0.id', $draft->id)
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonStructure(['data', 'links', 'meta', 'message']);
+
+        $this->actingAs($customer, 'sanctum')
+            ->getJson('/api/v1/menus-dia?estado=BORRADOR')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $published->id)
+            ->assertJsonPath('data.0.productos.0.id', $product->id);
+    }
+
     public function test_staff_can_create_a_menu_draft_and_customers_cannot_manage_menus(): void
     {
         $operator = Usuario::factory()->operador()->create();

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Requests\Api\V1\Reservations\IndexAvailableTablesApiRequest;
 use App\Http\Requests\Api\V1\Reservations\IndexReservationApiRequest;
 use App\Http\Requests\Api\V1\Reservations\StoreReservationApiRequest;
 use App\Http\Requests\Api\V1\Reservations\UpdateReservationApiRequest;
+use App\Http\Resources\Api\V1\AvailableTableCollection;
 use App\Http\Resources\Api\V1\ReservaResource;
 use App\Http\Resources\Api\V1\ReservationCollection;
 use App\Models\Reserva;
@@ -35,6 +37,21 @@ class ReservationController
         );
 
         return ReservationCollection::make($reservas);
+    }
+
+    public function availableTables(
+        IndexAvailableTablesApiRequest $request,
+    ): AvailableTableCollection {
+        Gate::authorize('create', Reserva::class);
+        $data = $request->validated();
+
+        return AvailableTableCollection::make(
+            $this->reservationService->availableTables(
+                Carbon::createFromFormat('Y-m-d\TH:i', $data['fecha_inicio']),
+                Carbon::createFromFormat('Y-m-d\TH:i', $data['fecha_fin']),
+                (int) $data['numero_personas'],
+            ),
+        );
     }
 
     public function show(Reserva $reserva): ReservaResource

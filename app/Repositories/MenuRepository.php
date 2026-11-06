@@ -17,39 +17,26 @@ use RuntimeException;
 class MenuRepository
 {
     /**
-     * @param  array{estado?: string, fecha_desde?: string, fecha_hasta?: string}  $filters
+     * @param  array{estado?: string, fecha_desde?: string, fecha_hasta?: string, per_page?: int}  $filters
      * @return LengthAwarePaginator<int, MenuDia>
      */
     public function paginateFor(Usuario $usuario, array $filters): LengthAwarePaginator
     {
-        return MenuDia::query()
-            ->with('productos')
-            ->when(
-                $usuario->rol === RolUsuarioEnum::CLIENTE,
-                fn (Builder $query): Builder => $query->where('estado', 'PUBLICADO'),
-            )
-            ->when(
-                $usuario->rol !== RolUsuarioEnum::CLIENTE && ($filters['estado'] ?? null),
-                fn (Builder $query, string $estado): Builder => $query->where('estado', $estado),
-            )
-            ->when(
-                $filters['fecha_desde'] ?? null,
-                fn (Builder $query, string $fecha): Builder => $query->whereDate(
-                    'fecha',
-                    '>=',
-                    $fecha,
-                ),
-            )
-            ->when(
-                $filters['fecha_hasta'] ?? null,
-                fn (Builder $query, string $fecha): Builder => $query->whereDate(
-                    'fecha',
-                    '<=',
-                    $fecha,
-                ),
-            )
+        $query = MenuDia::query()->with('productos');
+
+        if ($usuario->rol === RolUsuarioEnum::CLIENTE) {
+            $query->where('estado', 'PUBLICADO');
+        } elseif ($filters['estado'] ?? null) {
+            $query->where('estado', $filters['estado']);
+        }
+
+        return $query
+            ->when($filters['fecha_desde'] ?? null, fn (Builder $query, string $fecha): Builder => $query
+                ->whereDate('fecha', '>=', $fecha))
+            ->when($filters['fecha_hasta'] ?? null, fn (Builder $query, string $fecha): Builder => $query
+                ->whereDate('fecha', '<=', $fecha))
             ->orderByDesc('fecha')
-            ->paginate(15)
+            ->paginate($filters['per_page'] ?? 15)
             ->withQueryString();
     }
 

@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Requests\Api\V1\Menus\IndexMenuDiaApiRequest;
 use App\Http\Requests\Api\V1\Menus\StoreMenuDiaApiRequest;
 use App\Http\Requests\Api\V1\Menus\UpdateMenuDiaApiRequest;
+use App\Http\Resources\Api\V1\MenuDiaCollection;
 use App\Http\Resources\Api\V1\MenuDiaResource;
 use App\Models\MenuDia;
+use App\Models\Usuario;
 use App\Services\MenuService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +24,19 @@ class MenuDiaController
     public function __construct(
         private readonly MenuService $menuService,
     ) {}
+
+    public function index(IndexMenuDiaApiRequest $request): MenuDiaCollection
+    {
+        Gate::authorize('viewAny', MenuDia::class);
+        $usuario = $request->user();
+        if (! $usuario instanceof Usuario) {
+            throw new AuthorizationException('Se requiere una sesión autenticada.');
+        }
+
+        return MenuDiaCollection::make(
+            $this->menuService->paginate($usuario, $request->validated()),
+        );
+    }
 
     public function actual(): MenuDiaResource
     {

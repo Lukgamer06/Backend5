@@ -1,0 +1,384 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hostalconnect_mobile/core/network/api_exception.dart';
+import 'package:hostalconnect_mobile/features/auth/models/auth_user.dart';
+import 'package:hostalconnect_mobile/features/auth/providers/auth_controller.dart';
+import 'package:hostalconnect_mobile/features/auth/repositories/auth_repository.dart';
+import 'package:hostalconnect_mobile/features/auth/screens/home_screen.dart';
+import 'package:hostalconnect_mobile/features/auth/screens/login_screen.dart';
+import 'package:hostalconnect_mobile/features/catalog/models/daily_menu.dart';
+import 'package:hostalconnect_mobile/features/catalog/models/menu_page.dart';
+import 'package:hostalconnect_mobile/features/catalog/models/product.dart';
+import 'package:hostalconnect_mobile/features/catalog/models/product_page.dart';
+import 'package:hostalconnect_mobile/features/catalog/providers/catalog_controller.dart';
+import 'package:hostalconnect_mobile/features/catalog/repositories/catalog_repository.dart';
+import 'package:hostalconnect_mobile/features/orders/models/order.dart';
+import 'package:hostalconnect_mobile/features/orders/providers/order_controller.dart';
+import 'package:hostalconnect_mobile/features/orders/repositories/order_repository.dart';
+import 'package:hostalconnect_mobile/features/orders/screens/create_order_screen.dart';
+import 'package:hostalconnect_mobile/features/orders/screens/order_history_screen.dart';
+import 'package:hostalconnect_mobile/features/payments/models/payment.dart';
+import 'package:hostalconnect_mobile/features/payments/providers/payment_controller.dart';
+import 'package:hostalconnect_mobile/features/payments/repositories/payment_repository.dart';
+import 'package:hostalconnect_mobile/routes/app_router.dart';
+import 'package:provider/provider.dart';
+
+void main() {
+  testWidgets('login navigates to the protected home screen', (tester) async {
+    final controller = AuthController(_FakeAuthRepository());
+    await controller.restoreSession();
+    final catalogController = CatalogController(_FakeCatalogRepository());
+    await catalogController.load();
+    final orderController = OrderController(_FakeOrderRepository());
+    final router = createAppRouter(controller);
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<AuthController>.value(
+        value: controller,
+        child: ChangeNotifierProvider<CatalogController>.value(
+          value: catalogController,
+          child: ChangeNotifierProvider<OrderController>.value(
+            value: orderController,
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Correo electrónico'),
+      'ana@example.test',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Contraseña'),
+      'secret',
+    );
+    await tester.tap(find.text('Iniciar sesión'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.text('Hola, Ana'), findsOneWidget);
+    expect(find.text('Sopa del día'), findsOneWidget);
+    expect(find.text('Menú del día'), findsOneWidget);
+
+    await tester.tap(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    router.dispose();
+    controller.dispose();
+    catalogController.dispose();
+    orderController.dispose();
+  });
+
+  testWidgets('customer can add a product and create an order', (tester) async {
+    final controller = AuthController(_FakeAuthRepository());
+    await controller.restoreSession();
+    final catalogController = CatalogController(_FakeCatalogRepository());
+    await catalogController.load();
+    final orderController = OrderController(_FakeOrderRepository());
+    final paymentController = PaymentController(_FakePaymentRepository());
+    final router = createAppRouter(controller);
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<AuthController>.value(
+        value: controller,
+        child: ChangeNotifierProvider<CatalogController>.value(
+          value: catalogController,
+          child: ChangeNotifierProvider<OrderController>.value(
+            value: orderController,
+            child: ChangeNotifierProvider<PaymentController>.value(
+              value: paymentController,
+              child: MaterialApp.router(routerConfig: router),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Correo electrónico'),
+      'ana@example.test',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Contraseña'),
+      'secret',
+    );
+    await tester.tap(find.text('Iniciar sesión'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Agregar al carrito').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-cart')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CreateOrderScreen), findsOneWidget);
+    await tester.tap(find.byKey(const Key('submit-order')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OrderHistoryScreen), findsOneWidget);
+    expect(find.text('Pedido #123 · Registrado'), findsOneWidget);
+    await tester.tap(find.text('Pedido #123 · Registrado'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sopa del día'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('online-payment-123')));
+    await tester.tap(find.byKey(const Key('online-payment-123')));
+    await tester.pumpAndSettle();
+    expect(find.text('En línea · Pendiente'), findsOneWidget);
+    expect(
+      tester
+          .widget<OutlinedButton>(find.byKey(const Key('online-payment-123')))
+          .onPressed,
+      isNull,
+    );
+
+    router.dispose();
+    controller.dispose();
+    catalogController.dispose();
+    orderController.dispose();
+    paymentController.dispose();
+  });
+
+  testWidgets('unauthenticated users cannot remain on the protected route', (
+    tester,
+  ) async {
+    final controller = AuthController(_FakeAuthRepository());
+    await controller.restoreSession();
+    final catalogController = CatalogController(_FakeCatalogRepository());
+    await catalogController.load();
+    final router = createAppRouter(controller);
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<AuthController>.value(
+        value: controller,
+        child: ChangeNotifierProvider<CatalogController>.value(
+          value: catalogController,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(HomeScreen), findsNothing);
+
+    router.dispose();
+    controller.dispose();
+    catalogController.dispose();
+  });
+
+  test(
+    'expired session clears the token and returns to unauthenticated state',
+    () async {
+      final repository = _FakeAuthRepository(
+        restoreError: const ApiException(
+          message: 'La sesión no está autenticada o ha expirado.',
+          statusCode: 401,
+        ),
+      );
+      final controller = AuthController(repository);
+
+      await controller.restoreSession();
+
+      expect(controller.status, AuthStatus.unauthenticated);
+      expect(controller.user, isNull);
+      expect(repository.clearTokenCalls, 1);
+      expect(controller.message, contains('expiró'));
+
+      controller.dispose();
+    },
+  );
+}
+
+class _FakeCatalogRepository implements CatalogRepository {
+  @override
+  Future<ProductPage> getProducts({
+    required int page,
+    required int perPage,
+    String? search,
+  }) async {
+    return const ProductPage(
+      products: [
+        Product(
+          id: 1,
+          name: 'Sopa del día',
+          description: 'Sopa casera',
+          price: 12500,
+          available: true,
+        ),
+      ],
+      currentPage: 1,
+      lastPage: 1,
+      total: 1,
+    );
+  }
+
+  @override
+  Future<DailyMenu> getDailyMenu() async {
+    return DailyMenu(
+      id: 1,
+      date: DateTime(2026, 11, 5),
+      status: 'PUBLICADO',
+      products: const [
+        Product(
+          id: 1,
+          name: 'Sopa del día',
+          description: 'Sopa casera',
+          price: 12500,
+          available: true,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<MenuPage> getMenus({
+    required int page,
+    required int perPage,
+    String? status,
+  }) async => const MenuPage(menus: [], currentPage: 1, lastPage: 1, total: 0);
+
+  @override
+  Future<List<Product>> getMenuProducts({String? search}) async => const [];
+
+  @override
+  Future<DailyMenu> createMenu({
+    required DateTime date,
+    required List<int> productIds,
+  }) async =>
+      DailyMenu(id: 1, date: date, status: 'BORRADOR', products: const []);
+
+  @override
+  Future<DailyMenu> updateMenu({
+    required int menuId,
+    required DateTime date,
+    required List<int> productIds,
+  }) async =>
+      DailyMenu(id: menuId, date: date, status: 'BORRADOR', products: const []);
+
+  @override
+  Future<DailyMenu> publishMenu(int menuId) async => DailyMenu(
+    id: menuId,
+    date: DateTime(2026, 11, 5),
+    status: 'PUBLICADO',
+    products: const [],
+  );
+}
+
+class _FakeOrderRepository implements OrderRepository {
+  static const _order = CustomerOrder(
+    id: 123,
+    status: 'REGISTRADO',
+    attentionType: 'INMEDIATO',
+    serviceMode: 'SIN_MESA',
+    total: 12500,
+    lines: [
+      OrderLine(
+        productId: 1,
+        name: 'Sopa del día',
+        quantity: 1,
+        unitPrice: 12500,
+        subtotal: 12500,
+      ),
+    ],
+  );
+
+  @override
+  Future<CustomerOrder> cancelOrder(int orderId) async => _order;
+
+  @override
+  Future<CustomerOrder> changeOrderStatus(int orderId, String status) async =>
+      _order;
+
+  @override
+  Future<CustomerOrder> createOrder({
+    required String attentionType,
+    required String serviceMode,
+    DateTime? scheduledAt,
+    required List<Map<String, Object?>> lines,
+  }) async => _order;
+
+  @override
+  Future<OrderPage> getOrders({required int page, String? status}) async {
+    return const OrderPage(
+      orders: [_order],
+      currentPage: 1,
+      lastPage: 1,
+      total: 1,
+    );
+  }
+}
+
+class _FakePaymentRepository implements PaymentRepository {
+  bool _hasPayment = false;
+
+  static const _payment = Payment(
+    id: 80,
+    orderId: 123,
+    amount: 12500,
+    channel: 'EN_LINEA',
+    status: 'PENDIENTE',
+    reference: 'reference-80',
+  );
+
+  @override
+  Future<List<Payment>> getForOrder(int orderId) async =>
+      _hasPayment ? const [_payment] : const [];
+
+  @override
+  Future<Payment> requestOnlinePayment(
+    int orderId,
+    String idempotencyKey,
+  ) async {
+    _hasPayment = true;
+    return _payment;
+  }
+
+  @override
+  Future<Payment> registerInPersonPayment(
+    int orderId,
+    String idempotencyKey,
+  ) async {
+    _hasPayment = true;
+    return _payment;
+  }
+}
+
+class _FakeAuthRepository implements AuthRepository {
+  _FakeAuthRepository({this.restoreError});
+
+  static const _user = AuthUser(
+    id: 1,
+    nombres: 'Ana',
+    apellidos: 'Pérez',
+    correo: 'ana@example.test',
+    rol: 'CLIENTE',
+  );
+
+  final ApiException? restoreError;
+  int clearTokenCalls = 0;
+
+  @override
+  Future<void> clearToken() async {
+    clearTokenCalls++;
+  }
+
+  @override
+  Future<AuthUser> login(String correo, String password) async => _user;
+
+  @override
+  Future<void> logout() async {}
+
+  @override
+  Future<AuthUser?> restoreSession() async {
+    if (restoreError case final error?) {
+      throw error;
+    }
+
+    return null;
+  }
+}

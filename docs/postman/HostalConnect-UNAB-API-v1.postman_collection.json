@@ -18,7 +18,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8000",
+      "value": "http://localhost:8080",
       "type": "string"
     },
     {
@@ -342,6 +342,33 @@
       "name": "Reservas",
       "item": [
         {
+          "name": "Consultar mesas disponibles",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/reservas/disponibilidad?fecha_inicio=2026-12-10T18%3A00&fecha_fin=2026-12-10T19%3A00&numero_personas=2",
+            "description": "Requiere un cliente autenticado con permiso para reservar. Devuelve únicamente mesas habilitadas, con capacidad suficiente y libres en el intervalo. Parámetros obligatorios: fecha_inicio y fecha_fin con formato Y-m-dTH:i, numero_personas entre 1 y 255. La creación vuelve a comprobar disponibilidad para evitar conflictos concurrentes."
+          },
+          "response": [
+            {
+              "name": "200 - Mesas disponibles",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": [{\"id\": 1, \"numero\": 1, \"capacidad\": 4}],\n  \"links\": {},\n  \"meta\": {},\n  \"message\": \"Mesas disponibles consultadas correctamente.\"\n}"
+            },
+            {
+              "name": "422 - Validación",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Los datos enviados no son válidos.\",\n  \"meta\": {\"errors\": {\"fecha_fin\": [\"The fecha fin field must be a date after fecha inicio.\"]}}\n}"
+            }
+          ]
+        },
+        {
           "name": "Listar reservas",
           "request": {
             "method": "GET",
@@ -356,7 +383,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [],
-              "body": "{\n  \"data\": [{\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"mesa_id\": 1, \"fecha_inicio\": \"2026-12-10T18:00:00-05:00\", \"fecha_fin\": \"2026-12-10T19:00:00-05:00\", \"numero_personas\": 2, \"estado\": \"CONFIRMADA\", \"observaciones\": null, \"usuario\": null, \"cliente\": null}],\n  \"links\": {\"first\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"last\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"prev\": null, \"next\": null},\n  \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"path\": \"{{baseUrl}}/api/v1/reservas\", \"per_page\": 15, \"to\": 1, \"total\": 1},\n  \"message\": \"Reservas consultadas correctamente.\"\n}"
+              "body": "{\n  \"data\": [{\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"mesa_id\": 1, \"fecha_inicio\": \"2026-12-10T18:00:00-05:00\", \"fecha_fin\": \"2026-12-10T19:00:00-05:00\", \"numero_personas\": 2, \"estado\": \"CONFIRMADA\", \"observaciones\": null, \"mesa\": {\"id\": 1, \"numero\": 1, \"capacidad\": 4}, \"usuario\": null, \"cliente\": null}],\n  \"links\": {\"first\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"last\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"prev\": null, \"next\": null},\n  \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"path\": \"{{baseUrl}}/api/v1/reservas\", \"per_page\": 15, \"to\": 1, \"total\": 1},\n  \"message\": \"Reservas consultadas correctamente.\"\n}"
             }
           ]
         },
@@ -818,6 +845,25 @@
               "_postman_previewlanguage": "json",
               "header": [],
               "body": "{\n  \"data\": null,\n  \"message\": \"Recurso no encontrado.\",\n  \"meta\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar menús del día",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/menus-dia?estado=BORRADOR&per_page=10",
+            "description": "Requiere sesión autenticada. El personal puede filtrar borradores/publicados; los clientes reciben únicamente menús publicados. Filtros: estado, fecha_desde, fecha_hasta, page, per_page."
+          },
+          "response": [
+            {
+              "name": "200 - Menús paginados",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": [{\"id\": 1, \"fecha\": \"2026-12-10\", \"estado\": \"BORRADOR\", \"productos\": [{\"id\": 1, \"nombre\": \"Desayuno continental\", \"descripcion\": \"Pan, café y fruta\", \"precio\": \"12.50\", \"disponible\": true}]}],\n  \"links\": {\"first\": \"{{baseUrl}}/api/v1/menus-dia?page=1\", \"last\": \"{{baseUrl}}/api/v1/menus-dia?page=1\", \"prev\": null, \"next\": null},\n  \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"path\": \"{{baseUrl}}/api/v1/menus-dia\", \"per_page\": 10, \"to\": 1, \"total\": 1},\n  \"message\": \"Menús del día consultados correctamente.\"\n}"
             }
           ]
         },

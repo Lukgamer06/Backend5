@@ -25,14 +25,11 @@ class AvailabilityService
         DateTimeInterface $fechaFin,
         int $numeroPersonas,
     ): Collection {
-        return $this->reservationRepository->tables()
-            ->filter(fn (Mesa $mesa): bool => $this->isAvailable(
-                $mesa,
-                $fechaInicio,
-                $fechaFin,
-                $numeroPersonas,
-            ))
-            ->values();
+        return $this->reservationRepository->availableTables(
+            $fechaInicio,
+            $fechaFin,
+            $numeroPersonas,
+        );
     }
 
     public function ensureTableIsAvailable(
@@ -62,20 +59,5 @@ class AvailabilityService
         )) {
             throw new ReservationConflictException;
         }
-    }
-
-    private function isAvailable(
-        Mesa $mesa,
-        DateTimeInterface $fechaInicio,
-        DateTimeInterface $fechaFin,
-        int $numeroPersonas,
-    ): bool {
-        return $mesa->estado_operativo === EstadoOperativoMesaEnum::HABILITADA
-            && $numeroPersonas <= $mesa->capacidad
-            && ! $this->reservationRepository->hasConflict(
-                $mesa,
-                $fechaInicio,
-                $fechaFin,
-            );
     }
 }

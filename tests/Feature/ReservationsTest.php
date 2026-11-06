@@ -11,8 +11,10 @@ use App\Models\Mesa;
 use App\Models\Pedido;
 use App\Models\Reserva;
 use App\Models\Usuario;
+use App\Services\AvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ReservationsTest extends TestCase
@@ -169,6 +171,26 @@ class ReservationsTest extends TestCase
             ))
             ->assertRedirect(route('reservations.create'))
             ->assertSessionHasErrors('mesa_id');
+    }
+
+    public function test_available_tables_uses_one_query_for_many_tables(): void
+    {
+        Mesa::factory()->count(20)->create();
+        $inicio = Carbon::now()->addDays(8)->startOfHour();
+        $connection = DB::connection();
+        $connection->enableQueryLog();
+        $connection->flushQueryLog();
+
+        $availableTables = app(AvailabilityService::class)->availableTables(
+            $inicio,
+            $inicio->copy()->addHour(),
+            2,
+        );
+        $queries = $connection->getQueryLog();
+        $connection->disableQueryLog();
+
+        $this->assertCount(20, $availableTables);
+        $this->assertCount(1, $queries);
     }
 
     public function test_reservation_rejects_party_size_above_table_capacity(): void

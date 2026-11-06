@@ -13,6 +13,8 @@ abstract interface class OrderRepository {
   });
 
   Future<CustomerOrder> cancelOrder(int orderId);
+
+  Future<CustomerOrder> changeOrderStatus(int orderId, String status);
 }
 
 class ApiOrderRepository extends BaseRepository implements OrderRepository {
@@ -54,6 +56,16 @@ class ApiOrderRepository extends BaseRepository implements OrderRepository {
   @override
   Future<CustomerOrder> cancelOrder(int orderId) async {
     final response = await post('pedidos/$orderId/cancelacion');
+
+    return CustomerOrder.fromJson(_object(response['data']));
+  }
+
+  @override
+  Future<CustomerOrder> changeOrderStatus(int orderId, String status) async {
+    final response = await patch(
+      'pedidos/$orderId/estado',
+      body: {'estado': status},
+    );
 
     return CustomerOrder.fromJson(_object(response['data']));
   }

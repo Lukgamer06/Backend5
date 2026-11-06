@@ -94,6 +94,23 @@ void main() {
       controller.dispose();
     },
   );
+
+  test('updates an order after the API accepts its next status', () async {
+    final repository = _FakeOrderRepository();
+    final controller = OrderController(repository);
+    await controller.loadOrders();
+
+    final updatedOrder = await controller.changeOrderStatus(
+      _FakeOrderRepository.order,
+      'EN_PREPARACION',
+    );
+
+    expect(repository.changedStatus, 'EN_PREPARACION');
+    expect(updatedOrder?.status, 'EN_PREPARACION');
+    expect(controller.orders.single.status, 'EN_PREPARACION');
+
+    controller.dispose();
+  });
 }
 
 class _FakeOrderRepository implements OrderRepository {
@@ -119,17 +136,14 @@ class _FakeOrderRepository implements OrderRepository {
   final ApiException? cancellationError;
   String? attentionType;
   String? serviceMode;
+  String? changedStatus;
   List<Map<String, Object?>>? lines;
   int createCalls = 0;
+  CustomerOrder _order = order;
 
   @override
   Future<OrderPage> getOrders({required int page, String? status}) async {
-    return const OrderPage(
-      orders: [order],
-      currentPage: 1,
-      lastPage: 1,
-      total: 1,
-    );
+    return OrderPage(orders: [_order], currentPage: 1, lastPage: 1, total: 1);
   }
 
   @override
@@ -154,5 +168,20 @@ class _FakeOrderRepository implements OrderRepository {
     }
 
     return order;
+  }
+
+  @override
+  Future<CustomerOrder> changeOrderStatus(int orderId, String status) async {
+    changedStatus = status;
+    _order = CustomerOrder(
+      id: _order.id,
+      status: status,
+      attentionType: _order.attentionType,
+      serviceMode: _order.serviceMode,
+      total: _order.total,
+      lines: _order.lines,
+      customerName: _order.customerName,
+    );
+    return _order;
   }
 }

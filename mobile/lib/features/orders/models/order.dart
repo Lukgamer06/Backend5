@@ -54,6 +54,7 @@ class CustomerOrder {
     required this.total,
     required this.lines,
     this.scheduledAt,
+    this.customerName,
   });
 
   factory CustomerOrder.fromJson(Map<String, dynamic> json) {
@@ -64,6 +65,7 @@ class CustomerOrder {
     final total = _parseMoney(json['total']);
     final rawLines = json['detalles'];
     final scheduledAt = json['fecha_programada'];
+    final rawCustomer = json['cliente'];
 
     if (id is! int ||
         status is! String ||
@@ -76,6 +78,28 @@ class CustomerOrder {
         message: 'El servidor devolvió un pedido no válido.',
       );
     }
+    if (rawCustomer != null && rawCustomer is! Map<String, dynamic>) {
+      throw const ApiException(
+        message: 'El servidor devolvió un cliente de pedido no válido.',
+      );
+    }
+
+    final customerData = rawCustomer is Map<String, dynamic>
+        ? rawCustomer
+        : null;
+    final firstName = customerData?['nombres'];
+    final lastName = customerData?['apellidos'];
+    if ((firstName != null && firstName is! String) ||
+        (lastName != null && lastName is! String)) {
+      throw const ApiException(
+        message: 'El servidor devolvió un cliente de pedido no válido.',
+      );
+    }
+
+    final customerName = [
+      firstName,
+      lastName,
+    ].whereType<String>().where((name) => name.isNotEmpty).join(' ');
 
     return CustomerOrder(
       id: id,
@@ -86,6 +110,7 @@ class CustomerOrder {
       scheduledAt: scheduledAt is String
           ? DateTime.tryParse(scheduledAt)
           : null,
+      customerName: customerName.isEmpty ? null : customerName,
       lines: rawLines
           .map((item) {
             if (item is! Map<String, dynamic>) {
@@ -107,8 +132,16 @@ class CustomerOrder {
   final double total;
   final List<OrderLine> lines;
   final DateTime? scheduledAt;
+  final String? customerName;
 
   bool get canRequestCancellation => status == 'REGISTRADO';
+
+  String? get nextProgressionStatus => switch (status) {
+    'REGISTRADO' => 'EN_PREPARACION',
+    'EN_PREPARACION' => 'LISTO',
+    'LISTO' => 'ENTREGADO',
+    _ => null,
+  };
 }
 
 class OrderPage {

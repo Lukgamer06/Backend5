@@ -31,6 +31,8 @@ La ruta `/` requiere una sesión autenticada y muestra el catálogo permitido pa
 
 Los clientes pueden agregar productos disponibles al carrito, crear pedidos inmediatos o programados sin mesa, consultar sus pedidos paginados y solicitar la cancelación de pedidos registrados. El servidor calcula el total y autoriza cada cancelación. Desde el detalle del pedido pueden consultar pagos y solicitar el registro de un pago en línea o presencial. Estas solicitudes requieren `Idempotency-Key`; el cliente reutiliza la clave al reintentar una operación fallida, muestra el estado devuelto por el servidor y no procesa tarjetas ni confirma pagos pendientes. La disponibilidad de mesas no se simula en el cliente.
 
+El personal (`ADMINISTRADOR` y `OPERADOR`) puede consultar y filtrar los pedidos de operación, ver el nombre del cliente y avanzar el estado por las transiciones permitidas. La API sigue siendo la autoridad para validar rol y transición; las acciones de pago y cancelación del cliente no se muestran al personal.
+
 Los clientes también pueden consultar mesas disponibles por fecha, intervalo y cantidad de personas, crear una reserva seleccionando una mesa devuelta por la API, listar sus reservas con filtros y paginación, y cancelar una reserva. La disponibilidad se valida nuevamente en el servidor al crearla; si otra reserva ocupa la mesa entre la consulta y la confirmación, el cliente muestra el conflicto y actualiza la lista de mesas.
 
 El personal (`ADMINISTRADOR` y `OPERADOR`) puede reportar incidencias, consultar la lista paginada con búsqueda y filtros de estado/prioridad, y actualizar su estado o prioridad. La política de la API autoriza estas operaciones; el cliente no envía el usuario reportante ni define el estado inicial.

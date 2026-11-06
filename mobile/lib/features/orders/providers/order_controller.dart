@@ -161,6 +161,38 @@ class OrderController extends ChangeNotifier {
     }
   }
 
+  Future<CustomerOrder?> changeOrderStatus(
+    CustomerOrder order,
+    String status,
+  ) async {
+    if (_isSubmitting) {
+      return null;
+    }
+    _isSubmitting = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final updatedOrder = await _repository.changeOrderStatus(
+        order.id,
+        status,
+      );
+      await loadOrders(page: _currentPage);
+      if (_lastPage > 0 && _currentPage > _lastPage) {
+        await loadOrders(page: _lastPage);
+      }
+
+      return updatedOrder;
+    } on ApiException catch (error) {
+      _error = _firstValidationMessage(error) ?? error.message;
+
+      return null;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> goToPreviousPage() async {
     if (_currentPage > 1) {
       await loadOrders(page: _currentPage - 1);

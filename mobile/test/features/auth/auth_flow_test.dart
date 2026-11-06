@@ -291,6 +291,10 @@ class _FakeOrderRepository implements OrderRepository {
   Future<CustomerOrder> cancelOrder(int orderId) async => _order;
 
   @override
+  Future<CustomerOrder> changeOrderStatus(int orderId, String status) async =>
+      _order;
+
+  @override
   Future<CustomerOrder> createOrder({
     required String attentionType,
     required String serviceMode,

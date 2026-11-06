@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../auth/providers/auth_controller.dart';
 import '../models/order.dart';
 import '../providers/order_controller.dart';
 import '../../payments/models/payment.dart';
@@ -38,10 +39,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Widget build(BuildContext context) {
     final controller = context.watch<OrderController>();
     final paymentController = context.watch<PaymentController>();
+    final role = context.watch<AuthController>().user?.rol;
+    final isStaff = role == 'ADMINISTRADOR' || role == 'OPERADOR';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pedidos'),
+        title: Text(isStaff ? 'Gestión de pedidos' : 'Pedidos'),
         actions: [
           PopupMenuButton<String>(
             tooltip: 'Filtrar por estado',
@@ -57,9 +60,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: controller.loadOrders,
-        child: _buildBody(context, controller, paymentController),
+        child: _buildBody(context, controller, paymentController, isStaff),
       ),
-      floatingActionButton: controller.cartItemCount == 0
+      floatingActionButton: role != 'CLIENTE' || controller.cartItemCount == 0
           ? null
           : FloatingActionButton.extended(
               key: const Key('open-cart'),
@@ -74,6 +77,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     BuildContext context,
     OrderController controller,
     PaymentController paymentController,
+    bool isStaff,
   ) {
     if (controller.isLoadingOrders && controller.orders.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -115,8 +119,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           _OrderCard(
             order: order,
             isBusy: controller.isSubmitting,
+            isStaff: isStaff,
             paymentController: paymentController,
             onCancel: () => _confirmCancellation(context, controller, order),
+            onChangeStatus: (status) =>
+                _changeOrderStatus(context, controller, order, status),
           ),
         if (controller.totalOrders > 10)
           Row(
@@ -145,6 +152,26 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             ],
           ),
       ],
+    );
+  }
+
+  Future<void> _changeOrderStatus(
+    BuildContext context,
+    OrderController controller,
+    CustomerOrder order,
+    String status,
+  ) async {
+    final updatedOrder = await controller.changeOrderStatus(order, status);
+    if (updatedOrder == null || !context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Pedido #${updatedOrder.id}: ${_orderStatusLabel(updatedOrder.status)}.',
+        ),
+      ),
     );
   }
 
@@ -183,29 +210,39 @@ class _OrderCard extends StatelessWidget {
   const _OrderCard({
     required this.order,
     required this.isBusy,
+    required this.isStaff,
     required this.paymentController,
     required this.onCancel,
+    required this.onChangeStatus,
   });
 
   final CustomerOrder order;
   final bool isBusy;
+  final bool isStaff;
   final PaymentController paymentController;
   final VoidCallback onCancel;
+  final ValueChanged<String> onChangeStatus;
 
   @override
   Widget build(BuildContext context) {
+    final nextStatus = order.nextProgressionStatus;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ExpansionTile(
         key: ValueKey('order-${order.id}'),
         onExpansionChanged: (expanded) {
-          if (expanded) {
+          if (expanded && !isStaff) {
             paymentController.loadForOrder(order.id);
           }
         },
         title: Text('Pedido #${order.id} · ${_orderStatusLabel(order.status)}'),
         subtitle: Text(
-          '${order.attentionType == 'PROGRAMADO' ? 'Programado' : 'Inmediato'} · ${_formatPrice(order.total)}',
+          [
+            if (isStaff && order.customerName != null) order.customerName!,
+            order.attentionType == 'PROGRAMADO' ? 'Programado' : 'Inmediato',
+            _formatPrice(order.total),
+          ].join(' · '),
         ),
         children: [
           for (final line in order.lines)
@@ -222,8 +259,22 @@ class _OrderCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Text('Entrega programada: ${_formatDate(date)}'),
             ),
-          _PaymentSection(order: order, controller: paymentController),
-          if (order.canRequestCancellation)
+          if (isStaff && nextStatus != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12, bottom: 8),
+                child: OutlinedButton.icon(
+                  key: Key('advance-order-${order.id}'),
+                  onPressed: isBusy ? null : () => onChangeStatus(nextStatus),
+                  icon: const Icon(Icons.arrow_forward),
+                  label: Text(_nextStatusActionLabel(nextStatus)),
+                ),
+              ),
+            ),
+          if (!isStaff)
+            _PaymentSection(order: order, controller: paymentController),
+          if (!isStaff && order.canRequestCancellation)
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
@@ -379,6 +430,13 @@ String _paymentChannelLabel(String channel) => switch (channel) {
   'EN_LINEA' => 'En línea',
   'PRESENCIAL' => 'Presencial',
   _ => channel,
+};
+
+String _nextStatusActionLabel(String status) => switch (status) {
+  'EN_PREPARACION' => 'Iniciar preparación',
+  'LISTO' => 'Marcar como listo',
+  'ENTREGADO' => 'Marcar como entregado',
+  _ => status,
 };
 
 String _paymentStatusLabel(String status) => switch (status) {

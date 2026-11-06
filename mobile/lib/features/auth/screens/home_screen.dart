@@ -56,7 +56,9 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.restaurant_menu),
             ),
           IconButton(
-            tooltip: 'Mis pedidos',
+            tooltip: user?.rol == 'ADMINISTRADOR' || user?.rol == 'OPERADOR'
+                ? 'Gestión de pedidos'
+                : 'Mis pedidos',
             onPressed: () => context.push('/pedidos'),
             icon: const Icon(Icons.receipt_long),
           ),

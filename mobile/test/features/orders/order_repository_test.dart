@@ -35,6 +35,7 @@ void main() {
       expect(result.currentPage, 2);
       expect(result.lastPage, 4);
       expect(result.orders.single.lines.single.name, 'Sopa');
+      expect(result.orders.single.customerName, 'Ana Pérez');
     });
 
     test('creates an order without trusting a client-supplied total', () async {
@@ -80,6 +81,28 @@ void main() {
       expect(client.lastRequest?.url.path, '/api/v1/pedidos/123/cancelacion');
       expect(order.status, 'CANCELADO');
     });
+
+    test(
+      'changes order status through the protected transition endpoint',
+      () async {
+        final client = _FakeHttpClient((request) async {
+          expect(request.method, 'PATCH');
+          expect(request.url.path, '/api/v1/pedidos/123/estado');
+          expect(jsonDecode((request as http.Request).body), {
+            'estado': 'LISTO',
+          });
+
+          return _jsonResponse({
+            'data': {..._orderJson(), 'estado': 'LISTO'},
+          });
+        });
+        final repository = _createRepository(client);
+
+        final order = await repository.changeOrderStatus(123, 'LISTO');
+
+        expect(order.status, 'LISTO');
+      },
+    );
   });
 }
 
@@ -94,6 +117,7 @@ Map<String, dynamic> _orderJson() => {
   'estado': 'REGISTRADO',
   'fecha_programada': '2026-11-06T14:30:00-05:00',
   'total': '25000.00',
+  'cliente': {'nombres': 'Ana', 'apellidos': 'Pérez'},
   'detalles': [
     {
       'id': 1,

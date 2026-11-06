@@ -17,6 +17,8 @@ flutter analyze
 flutter test
 ```
 
+GitHub Actions ejecuta `flutter analyze` y `flutter test` al abrir/actualizar un pull request y en cada push que cambie `mobile/` o el propio workflow. La verificación usa Flutter 3.44.9 y no requiere secretos; el smoke test contra staging se omite si no existe su configuración local.
+
 La app registra `http.Client`, `FlutterSecureStorage`, `ApiConfig` y `ApiClient` con Provider y configura GoRouter. La infraestructura API vive en `lib/core/network/` y usa el prefijo `/api/v1`.
 
 El ambiente y la URL se configuran al compilar con `APP_ENV` (`development`, `staging` o `production`) y `API_BASE_URL`. Desarrollo usa por defecto `http://10.0.2.2:8080` para el emulador Android; para iOS Simulator define `http://localhost:8080`, y para un dispositivo físico define la dirección LAN del host. Staging y producción requieren una URL explícita con HTTPS y rechazan hosts locales. Producción también rechaza direcciones IP y dominios reservados/de ejemplo; la app valida el formato y la clase de host, pero la existencia y titularidad del dominio deben verificarse al desplegar.

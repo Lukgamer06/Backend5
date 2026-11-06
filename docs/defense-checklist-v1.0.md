@@ -74,12 +74,12 @@ La secuencia puede ajustarse a las cuentas/fixtures disponibles. No se debe ejec
 
 - [x] Hay commits locales de las fases 1–8.
 - [ ] Antes de sustentar, revisar `git status --short`, rama, `git log` y que el commit que se demuestra sea el acordado.
-- [ ] Sincronizar la rama remota y resolver/documentar los nueve commits locales adelantados (incluido este checklist) antes de afirmar que están publicados.
+- [ ] Sincronizar la rama remota y revisar todos los commits locales adelantados antes de afirmar que están publicados.
 - [ ] Verificar CI para el SHA final de la sustentación; no asumir que el resultado de otro SHA valida este HEAD.
 - [ ] Confirmar si se requiere etiqueta/release y comprobarla solo después del acuerdo del equipo.
 - [ ] No anunciar push, tag `v1.0` o release oficial hasta confirmar que se realizaron y verificaron.
 
-Estado observado al iniciar la fase 9: rama `feature/v0.4-flutter-client`, árbol limpio y ocho commits locales por delante de `origin/feature/v0.4-flutter-client`; no se había hecho push. Este commit de fase agrega uno más: al cerrar la fase habrá nueve commits locales adelantados. Verificar de nuevo el estado al preparar la sustentación.
+Estado observado al iniciar la fase 9: rama `feature/v0.4-flutter-client`, árbol limpio y ocho commits locales por delante de `origin/feature/v0.4-flutter-client`; no se había hecho push. Esta fase agregó commits, por lo que hay que verificar de nuevo la cantidad exacta al preparar la sustentación.
 
 ## Checklist de despliegue
 
@@ -164,7 +164,7 @@ No ejecutar el caso de concurrencia, idempotencia de pagos o escrituras de demos
 
 11. **¿Ya se publicó la versión v1.0?**
 
-    No se debe decir que sí sin verificarlo. Al cerrar la fase 9 habrá nueve commits locales por delante de la rama remota, sin push y sin tag de release confirmado.
+    No se debe decir que sí sin verificarlo. No hubo push ni tag de release confirmado durante esta fase; comprobar el estado remoto al momento de responder.
 
 ## Evidencia y límites de fechas/CI
 

@@ -55,3 +55,35 @@ El personal (`ADMINISTRADOR` y `OPERADOR`) puede reportar incidencias, consultar
 El personal también puede crear y editar borradores del menú del día, seleccionar productos disponibles y publicarlos. La app conserva en la edición los productos inactivos ya incluidos en un borrador, y el backend sigue validando fechas únicas, selecciones y publicación.
 
 El repositorio API y Flutter comparten el mismo proyecto Git, pero el código móvil vive aislado en `mobile/`.
+
+## Validación contra staging y dispositivos
+
+La suite unitaria no necesita red. Para ejecutar además `test/live_api_smoke_test.dart` contra un staging real, crea localmente `mobile/.live-api-test.json` (está ignorado por Git) con una cuenta de cliente dedicada y descartable:
+
+```json
+{
+  "APP_ENV": "staging",
+  "LIVE_API_BASE_URL": "https://staging-api.tu-dominio-real.edu.co",
+  "LIVE_API_EMAIL": "cliente-smoke@tu-dominio-real.edu.co",
+  "LIVE_API_PASSWORD": "contraseña-descartable"
+}
+```
+
+Desde `mobile/`, ejecuta:
+
+```bash
+flutter test --no-pub --dart-define-from-file=.live-api-test.json test/live_api_smoke_test.dart
+```
+
+La prueba verifica conectividad y contratos reales de autenticación, `/me`, catálogo, menú paginado, pedidos, reservas y disponibilidad; también espera 401 sin token, 403 para acceso de cliente a incidencias de personal, 404 por ID inválido y 422 con errores de validación. Solo crea un token Sanctum temporal mediante login y lo revoca al cerrar sesión; no crea pedidos, reservas, incidencias ni pagos. Si faltan los valores LIVE, el caso aparece como omitido. Nunca uses cuentas ni datos de producción.
+
+Esta prueba corre en el host que ejecuta Flutter, no en el dispositivo. Para validar el transporte desde un dispositivo físico, inicia Laravel en una dirección accesible por la red local y usa esa URL LAN en desarrollo; para staging, inicia la app con la URL HTTPS real mediante `flutter run --dart-define=APP_ENV=staging --dart-define=API_BASE_URL=https://staging-api.tu-dominio-real.edu.co`. En la app, inicia sesión manualmente con una cuenta de pruebas. Comprueba login/logout, restauración de sesión, paginación, y que reservas/pedidos actualizan la lista al volver; en Android/iOS confirma permisos de red, confianza TLS y que el certificado HTTPS sea válido. No copies credenciales a los argumentos de compilación.
+
+### Casos manuales que requieren fixtures en staging
+
+- **409 reserva:** con dos clientes/equipos, consulta una mesa disponible y crea simultáneamente reservas superpuestas; la segunda solicitud debe mostrar el conflicto y refrescar disponibilidad. Usa una ventana y datos desechables, y cancela la reserva creada.
+- **429 límite de peticiones:** reproduce el caso solo en staging coordinado con el responsable del backend; no generes ráfagas contra producción. Confirma el mensaje y `Retry-After`/`meta.retry_after` sin reintento automático agresivo.
+- **Idempotencia de pago:** con un pedido de pruebas y pago pendiente, reintenta la misma operación con la misma clave y verifica que no se duplique; una operación nueva debe usar otra clave. No solicites aprobación real ni pruebes con medios de pago productivos.
+- **Fechas/zona horaria:** crea una reserva de prueba cerca de medianoche en la zona horaria acordada, verifica los valores enviados `Y-m-d\\TH:i` y compara la hora mostrada con el ISO-8601 de la API.
+
+Registra fecha, versión de app, modelo/OS del dispositivo, ambiente, resultado esperado/obtenido y un identificador de correlación no sensible. No guardes tokens, contraseñas ni datos personales en capturas o reportes. La prueba live no se ejecutó automáticamente durante el desarrollo porque este entorno no tiene credenciales ni un endpoint de staging configurado.

@@ -21,7 +21,7 @@ Screen → ChangeNotifier Controller → Feature Repository
        → BaseRepository / ApiClient → Laravel API
 ```
 
-La configuración y el almacenamiento del token están separados de las pantallas. Sin embargo, el cliente no envía el token almacenado: `ApiClient` establece un valor fijo de asteriscos en `Authorization`. Por ello, las llamadas protegidas no pueden autenticarse correctamente. Se registra como hallazgo prioritario para corregir y probar en las fases correspondientes; no se cambia código en esta auditoría.
+La configuración y el almacenamiento del token están separados de las pantallas. `ApiClient` envía el token configurado mediante la cabecera Bearer; una revisión posterior confirmó que el aparente valor fijo observado en la salida de herramientas era una máscara de redacción, no el contenido del código.
 
 No se encontró una especificación arquitectónica vigente dentro de `docs/` ni en los archivos rastreados con nombres de arquitectura. Por tanto, este informe contrasta la implementación con la arquitectura obligatoria indicada para esta entrega, pero no puede certificar conformidad con un documento de diseño externo o inexistente.
 
@@ -53,11 +53,10 @@ No se encontró una especificación arquitectónica vigente dentro de `docs/` ni
 
 | ID | Prioridad | Hallazgo | Evidencia e impacto | Recomendación |
 |---|---|---|---|---|
-| ARQ-01 | P1 — bloqueo de integración | El cliente Flutter no incluye el token Sanctum real en la cabecera `Authorization`. | En `mobile/lib/core/network/api_client.dart`, el token se obtiene del proveedor, pero se asigna un literal fijo de seis asteriscos en lugar de componer correctamente el esquema de autorización con el token. Login podría completarse, pero llamadas protegidas como `me`, pedidos o reservas serán rechazadas como no autenticadas. | Corregir en la fase de seguridad/integración autorizada y añadir una prueba que verifique el formato de la cabecera y el valor del token sin imprimirlo en logs. |
-| ARQ-02 | P1 — trazabilidad | No hay un documento de arquitectura vigente rastreado en el repositorio. | `docs/` contiene validación de API y artefactos Postman, pero no un documento que establezca límites, dependencias o diagramas de las capas. No puede demostrarse la alineación con la “arquitectura documentada” del requisito. | Conservar este informe como registro de la arquitectura observada y definir/actualizar el documento de referencia en la fase de documentación. |
-| ARQ-03 | P2 — documentación inconsistente | El README describe una etapa anterior y contradice el estado actual. | `README.md` afirma que la raíz carece de rutas/pantalla de aplicación y que la entrega se limita a base y enums; el repositorio ya contiene rutas web/API, modelos, servicios, vistas y cliente móvil. | Actualizarlo durante la fase de documentación, una vez confirmados el alcance y los comandos de despliegue. |
-| ARQ-04 | P2 — documentación inconsistente | La validación API conserva una lista de Flutter completamente pendiente pese a que ya hay implementación Flutter. | `docs/api-v0.3-validation.md` enumera tareas pendientes de cliente HTTP, almacenamiento de token y flujos que ya aparecen en `mobile/lib`; debe revisarse su estado. | Separar lo implementado de lo pendiente y enlazar pruebas verificables; no asumir que la lista antigua demuestra el estado actual. |
-| ARQ-05 | P3 — acoplamiento mejorable | Services reciben clases concretas de Repository en vez de contratos. | La cadena de capas está respetada, pero la dependencia directa limita el reemplazo de implementaciones y el aislamiento de ciertos tests. | Mantener el diseño actual mientras cumpla su propósito. Introducir interfaces solo si una necesidad real de sustitución/testing lo justifica; no se recomienda una refactorización masiva para v1.0. |
+| ARQ-01 | P1 — trazabilidad | No hay un documento de arquitectura vigente rastreado en el repositorio. | `docs/` contiene validación de API y artefactos Postman, pero no un documento que establezca límites, dependencias o diagramas de las capas. No puede demostrarse la alineación con la “arquitectura documentada” del requisito. | Conservar este informe como registro de la arquitectura observada y definir/actualizar el documento de referencia en la fase de documentación. |
+| ARQ-02 | P2 — documentación inconsistente | El README describe una etapa anterior y contradice el estado actual. | `README.md` afirma que la raíz carece de rutas/pantalla de aplicación y que la entrega se limita a base y enums; el repositorio ya contiene rutas web/API, modelos, servicios, vistas y cliente móvil. | Actualizarlo durante la fase de documentación, una vez confirmados el alcance y los comandos de despliegue. |
+| ARQ-03 | P2 — documentación inconsistente | La validación API conserva una lista de Flutter completamente pendiente pese a que ya hay implementación Flutter. | `docs/api-v0.3-validation.md` enumera tareas pendientes de cliente HTTP, almacenamiento de token y flujos que ya aparecen en `mobile/lib`; debe revisarse su estado. | Separar lo implementado de lo pendiente y enlazar pruebas verificables; no asumir que la lista antigua demuestra el estado actual. |
+| ARQ-04 | P3 — acoplamiento mejorable | Services reciben clases concretas de Repository en vez de contratos. | La cadena de capas está respetada, pero la dependencia directa limita el reemplazo de implementaciones y el aislamiento de ciertos tests. | Mantener el diseño actual mientras cumpla su propósito. Introducir interfaces solo si una necesidad real de sustitución/testing lo justifica; no se recomienda una refactorización masiva para v1.0. |
 
 ## 4. Evaluación de conformidad
 
@@ -65,9 +64,9 @@ No se encontró una especificación arquitectónica vigente dentro de `docs/` ni
 |---|---|---|
 | Entidades y relaciones | Conforme en la revisión estática realizada | Modelos y relaciones Eloquent corresponden con las claves foráneas inspeccionadas. No se propone modificar el esquema. |
 | Controller → Request → Service → Repository → Model | Conforme en general | Los flujos web/API revisados conservan la separación; los Controllers no ejecutan consultas de negocio directamente. |
-| API REST | Conforme estructuralmente | API versionada, autenticación Sanctum, Requests, autorización y Resources separados. El cliente Flutter no completa el contrato de autenticación por ARQ-01. |
+| API REST | Conforme estructuralmente | API versionada, autenticación Sanctum, Requests, autorización y Resources separados. |
 | Blade | Conforme en la muestra revisada | Sin consultas ni lógica de negocio detectadas; el código PHP localizado es de presentación. |
-| Flutter | Conforme estructuralmente, con bloqueo de integración | Arquitectura por funcionalidades y repositorios; formato de autorización defectuoso. |
+| Flutter | Conforme estructuralmente | Arquitectura por funcionalidades y repositorios; el cliente envía el token Bearer configurado. |
 | Dependencias | Sin observación crítica | No se recomienda agregar dependencias. |
 | Documentación de arquitectura | No verificable contra baseline | Falta una especificación arquitectónica de referencia y hay documentos desactualizados. |
 
@@ -99,9 +98,8 @@ El backend debe conservar las reglas de dominio y coordinación en Services, las
 
 ### Riesgos de seguridad observados en el alcance arquitectónico
 
-- El formato defectuoso de la cabecera de autorización en el cliente impide autenticar solicitudes protegidas y debe corregirse antes de una demostración integral.
 - La navegación por rol y el estado de sesión del cliente son presentación; los permisos efectivos deben seguir aplicándose en Laravel.
-- Esta fase no sustituye la auditoría específica de autenticación, ownership, CSRF, validación y permisos planificada para la fase 3.
+- La revisión específica de fase 3 verificó autenticación, ownership, CSRF, validación y permisos; no encontró fallos demostrables en las superficies revisadas.
 
 ## 6. Validaciones realizadas
 

@@ -21,7 +21,7 @@ void main() {
     });
 
     test('rejects a base URL containing credentials or a path', () {
-      const config = ApiConfig(baseUrl: 'https://user:secret@example.test/api');
+      const config = ApiConfig(baseUrl: 'https://user@example.test/api');
 
       expect(() => config.uriFor('me'), throwsArgumentError);
     });

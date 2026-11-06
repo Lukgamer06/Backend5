@@ -33,4 +33,6 @@ Los clientes pueden agregar productos disponibles al carrito, crear pedidos inme
 
 Los clientes también pueden consultar mesas disponibles por fecha, intervalo y cantidad de personas, crear una reserva seleccionando una mesa devuelta por la API, listar sus reservas con filtros y paginación, y cancelar una reserva. La disponibilidad se valida nuevamente en el servidor al crearla; si otra reserva ocupa la mesa entre la consulta y la confirmación, el cliente muestra el conflicto y actualiza la lista de mesas.
 
+El personal (`ADMINISTRADOR` y `OPERADOR`) puede reportar incidencias, consultar la lista paginada con búsqueda y filtros de estado/prioridad, y actualizar su estado o prioridad. La política de la API autoriza estas operaciones; el cliente no envía el usuario reportante ni define el estado inicial.
+
 El repositorio API y Flutter comparten el mismo proyecto Git, pero el código móvil vive aislado en `mobile/`.

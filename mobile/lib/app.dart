@@ -13,6 +13,8 @@ import 'features/auth/providers/auth_controller.dart';
 import 'features/auth/repositories/auth_repository.dart';
 import 'features/catalog/providers/catalog_controller.dart';
 import 'features/catalog/repositories/catalog_repository.dart';
+import 'features/incidents/providers/incident_controller.dart';
+import 'features/incidents/repositories/incident_repository.dart';
 import 'features/orders/providers/order_controller.dart';
 import 'features/orders/repositories/order_repository.dart';
 import 'features/payments/providers/payment_controller.dart';
@@ -62,6 +64,9 @@ class HostalConnectApp extends StatelessWidget {
         Provider<CatalogRepository>(
           create: (context) => ApiCatalogRepository(context.read<ApiClient>()),
         ),
+        Provider<IncidentRepository>(
+          create: (context) => ApiIncidentRepository(context.read<ApiClient>()),
+        ),
         Provider<OrderRepository>(
           create: (context) => ApiOrderRepository(context.read<ApiClient>()),
         ),
@@ -89,6 +94,10 @@ class HostalConnectApp extends StatelessWidget {
 
             return controller;
           },
+        ),
+        ChangeNotifierProvider<IncidentController>(
+          create: (context) =>
+              IncidentController(context.read<IncidentRepository>()),
         ),
         ChangeNotifierProvider<OrderController>(
           create: (context) => OrderController(context.read<OrderRepository>()),

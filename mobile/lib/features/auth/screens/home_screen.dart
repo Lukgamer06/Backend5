@@ -41,6 +41,13 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () => context.push('/reservas'),
               icon: const Icon(Icons.event_available),
             ),
+          if (user?.rol == 'ADMINISTRADOR' || user?.rol == 'OPERADOR')
+            IconButton(
+              key: const Key('open-incidents'),
+              tooltip: 'Incidencias',
+              onPressed: () => context.push('/incidencias'),
+              icon: const Icon(Icons.report_problem_outlined),
+            ),
           IconButton(
             tooltip: 'Mis pedidos',
             onPressed: () => context.push('/pedidos'),

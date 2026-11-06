@@ -122,37 +122,48 @@ No ejecutar el caso de concurrencia, idempotencia de pagos o escrituras de demos
 
 ## Preguntas probables y respuestas sugeridas
 
-1. **¿Por qué separaron Controller, Request, Service, Repository y Model?**  
+1. **¿Por qué separaron Controller, Request, Service, Repository y Model?**
+
    Los Requests concentran validación, Controllers adaptan HTTP, Services coordinan casos de uso, Repositories encapsulan consultas/persistencia y Models representan entidades/relaciones. Mantiene responsabilidades separadas sin rediseñar el sistema.
 
-2. **¿Cómo se protegen los endpoints y los datos de cada cliente?**  
+2. **¿Cómo se protegen los endpoints y los datos de cada cliente?**
+
    Sanctum autentica mediante token; middleware de rol, Policies y Gate autorizan acciones, y las consultas/accesos aplican ownership. Las decisiones efectivas permanecen en Laravel, no en Flutter.
 
-3. **¿Qué ocurre si vence o se revoca el token?**  
+3. **¿Qué ocurre si vence o se revoca el token?**
+
    La API responde 401; Flutter elimina la sesión local y vuelve al login. Logout revoca el token actual en servidor.
 
-4. **¿Cómo evitan reservas simultáneas incompatibles?**  
+4. **¿Cómo evitan reservas simultáneas incompatibles?**
+
    Disponibilidad filtra en base de datos mesas no ocupadas por reservas solapadas no canceladas y la creación vuelve a validar. Un conflicto se devuelve como 409. La prueba de disponibilidad mide consultas, no una prueba de concurrencia bajo carga.
 
-5. **¿Por qué los pagos no muestran éxito de cobro?**  
+5. **¿Por qué los pagos no muestran éxito de cobro?**
+
    No hay pasarela integrada: el backend registra una solicitud pendiente, valida idempotencia y no recibe datos de tarjeta ni confirma dinero.
 
-6. **¿Qué optimización se logró y cómo se midió?**  
+6. **¿Qué optimización se logró y cómo se midió?**
+
    El endpoint de disponibilidad sustituyó una consulta más N comprobaciones por una consulta relacional. Para 20 mesas candidatas, 21 sentencias pasan a 1 (~95% menos sentencias); no se midió latencia ni CPU/RAM.
 
-7. **¿Qué pruebas se ejecutaron exactamente?**  
+7. **¿Qué pruebas se ejecutaron exactamente?**
+
    La suite Laravel ejecutada reportó 136 pruebas/863 assertions y usa SQLite en memoria; además, un flujo HTTP acotado usó MySQL. Flutter CI reportó 72 pruebas y 1 omitida en un SHA remoto. El binario Flutter contra API/MySQL live no se ejecutó. No deben sumarse como una única ejecución integrada.
 
-8. **¿El proyecto está listo para producción?**  
+8. **¿El proyecto está listo para producción?**
+
    La revisión de preparación no certifica producción. Compose es local y falta definir/desplegar TLS, secretos, artefactos de release, monitoreo y backups con restauración probada.
 
-9. **¿Qué deuda queda?**  
+9. **¿Qué deuda queda?**
+
    Entre los pendientes conocidos están ejecutar Flutter real contra staging, estabilizar la suite completa cuando aparecen fallos intermitentes en algunos filtros/PATCH, validar CI para el commit final y preparar infraestructura productiva.
 
-10. **¿La arquitectura se contrastó con un diagrama inicial aprobado?**  
+10. **¿La arquitectura se contrastó con un diagrama inicial aprobado?**
+
     No se encontró un documento de diseño vigente en el repositorio. La auditoría compara el código con la arquitectura exigida para esta entrega y describe esa limitación.
 
-11. **¿Ya se publicó la versión v1.0?**  
+11. **¿Ya se publicó la versión v1.0?**
+
     No se debe decir que sí sin verificarlo. Al cerrar la fase 9 habrá nueve commits locales por delante de la rama remota, sin push y sin tag de release confirmado.
 
 ## Evidencia y límites de fechas/CI

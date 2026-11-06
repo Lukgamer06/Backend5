@@ -139,3 +139,5 @@ No se ha certificado despliegue productivo, carga/estrés, firma/publicación en
 Consulta el [checklist de despliegue v1.0](./docs/deployment-checklist-v1.0.md) para hallazgos, criterios de salida y verificaciones pendientes antes de producción.
 
 Para organizar la demostración y revisar la evidencia conocida, usa el [checklist de sustentación v1.0](./docs/defense-checklist-v1.0.md).
+
+Consulta el [informe final v1.0](./docs/final-v1.0-report.md) para el estado consolidado, lecciones aprendidas y deuda técnica pendiente.

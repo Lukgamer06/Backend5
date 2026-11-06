@@ -251,13 +251,15 @@ class ReservationsApiTest extends TestCase
         ?Carbon $fechaInicio = null,
     ): Reserva {
         $inicio = $fechaInicio ?? Carbon::now()->addDays(15)->startOfHour();
+        $mesa ??= Mesa::factory()->create();
 
         return Reserva::factory()->create([
             'usuario_id' => $cliente->usuario_id,
             'cliente_id' => $cliente->id,
-            'mesa_id' => $mesa?->id ?? Mesa::factory()->create()->id,
+            'mesa_id' => $mesa->id,
             'fecha_inicio' => $inicio,
             'fecha_fin' => $inicio->copy()->addHour(),
+            'numero_personas' => min(2, $mesa->capacidad),
         ]);
     }
 }

@@ -11,6 +11,11 @@ import 'package:hostalconnect_mobile/features/catalog/models/product.dart';
 import 'package:hostalconnect_mobile/features/catalog/models/product_page.dart';
 import 'package:hostalconnect_mobile/features/catalog/providers/catalog_controller.dart';
 import 'package:hostalconnect_mobile/features/catalog/repositories/catalog_repository.dart';
+import 'package:hostalconnect_mobile/features/orders/models/order.dart';
+import 'package:hostalconnect_mobile/features/orders/providers/order_controller.dart';
+import 'package:hostalconnect_mobile/features/orders/repositories/order_repository.dart';
+import 'package:hostalconnect_mobile/features/orders/screens/create_order_screen.dart';
+import 'package:hostalconnect_mobile/features/orders/screens/order_history_screen.dart';
 import 'package:hostalconnect_mobile/routes/app_router.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +25,7 @@ void main() {
     await controller.restoreSession();
     final catalogController = CatalogController(_FakeCatalogRepository());
     await catalogController.load();
+    final orderController = OrderController(_FakeOrderRepository());
     final router = createAppRouter(controller);
 
     await tester.pumpWidget(
@@ -27,7 +33,10 @@ void main() {
         value: controller,
         child: ChangeNotifierProvider<CatalogController>.value(
           value: catalogController,
-          child: MaterialApp.router(routerConfig: router),
+          child: ChangeNotifierProvider<OrderController>.value(
+            value: orderController,
+            child: MaterialApp.router(routerConfig: router),
+          ),
         ),
       ),
     );
@@ -59,6 +68,60 @@ void main() {
     router.dispose();
     controller.dispose();
     catalogController.dispose();
+    orderController.dispose();
+  });
+
+  testWidgets('customer can add a product and create an order', (tester) async {
+    final controller = AuthController(_FakeAuthRepository());
+    await controller.restoreSession();
+    final catalogController = CatalogController(_FakeCatalogRepository());
+    await catalogController.load();
+    final orderController = OrderController(_FakeOrderRepository());
+    final router = createAppRouter(controller);
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<AuthController>.value(
+        value: controller,
+        child: ChangeNotifierProvider<CatalogController>.value(
+          value: catalogController,
+          child: ChangeNotifierProvider<OrderController>.value(
+            value: orderController,
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Correo electrónico'),
+      'ana@example.test',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Contraseña'),
+      'secret',
+    );
+    await tester.tap(find.text('Iniciar sesión'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Agregar al carrito').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-cart')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CreateOrderScreen), findsOneWidget);
+    await tester.tap(find.byKey(const Key('submit-order')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OrderHistoryScreen), findsOneWidget);
+    expect(find.text('Pedido #123 · Registrado'), findsOneWidget);
+    await tester.tap(find.text('Pedido #123 · Registrado'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sopa del día'), findsOneWidget);
+
+    router.dispose();
+    controller.dispose();
+    catalogController.dispose();
+    orderController.dispose();
   });
 
   testWidgets('unauthenticated users cannot remain on the protected route', (
@@ -150,6 +213,46 @@ class _FakeCatalogRepository implements CatalogRepository {
           available: true,
         ),
       ],
+    );
+  }
+}
+
+class _FakeOrderRepository implements OrderRepository {
+  static const _order = CustomerOrder(
+    id: 123,
+    status: 'REGISTRADO',
+    attentionType: 'INMEDIATO',
+    serviceMode: 'SIN_MESA',
+    total: 12500,
+    lines: [
+      OrderLine(
+        productId: 1,
+        name: 'Sopa del día',
+        quantity: 1,
+        unitPrice: 12500,
+        subtotal: 12500,
+      ),
+    ],
+  );
+
+  @override
+  Future<CustomerOrder> cancelOrder(int orderId) async => _order;
+
+  @override
+  Future<CustomerOrder> createOrder({
+    required String attentionType,
+    required String serviceMode,
+    DateTime? scheduledAt,
+    required List<Map<String, Object?>> lines,
+  }) async => _order;
+
+  @override
+  Future<OrderPage> getOrders({required int page, String? status}) async {
+    return const OrderPage(
+      orders: [_order],
+      currentPage: 1,
+      lastPage: 1,
+      total: 1,
     );
   }
 }

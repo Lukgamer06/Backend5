@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../catalog/models/product.dart';
 import '../../catalog/providers/catalog_controller.dart';
+import '../../orders/providers/order_controller.dart';
 import '../providers/auth_controller.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,18 +27,33 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
     final catalogController = context.watch<CatalogController>();
+    final orderController = context.watch<OrderController>();
     final user = authController.user;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Catálogo'),
         actions: [
+          IconButton(
+            tooltip: 'Mis pedidos',
+            onPressed: () => context.push('/pedidos'),
+            icon: const Icon(Icons.receipt_long),
+          ),
           TextButton(
             onPressed: authController.isLoading ? null : authController.logout,
             child: const Text('Cerrar sesión'),
           ),
         ],
       ),
+      floatingActionButton:
+          user?.rol != 'CLIENTE' || orderController.cartItemCount == 0
+          ? null
+          : FloatingActionButton.extended(
+              key: const Key('open-cart'),
+              onPressed: () => context.push('/pedidos/nuevo'),
+              icon: const Icon(Icons.shopping_cart_checkout),
+              label: Text('Carrito (${orderController.cartItemCount})'),
+            ),
       body: RefreshIndicator(
         onRefresh: catalogController.load,
         child: CustomScrollView(
@@ -110,8 +127,25 @@ class _HomeScreenState extends State<HomeScreen> {
             else
               SliverList.builder(
                 itemCount: catalogController.products.length,
-                itemBuilder: (context, index) =>
-                    _ProductTile(product: catalogController.products[index]),
+                itemBuilder: (context, index) => _ProductTile(
+                  product: catalogController.products[index],
+                  canOrder: user?.rol == 'CLIENTE',
+                  onAdd: () {
+                    orderController.addProduct(
+                      catalogController.products[index],
+                    );
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '${catalogController.products[index].name} agregado al carrito.',
+                          ),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                  },
+                ),
               ),
             if (catalogController.totalProducts > 0)
               SliverToBoxAdapter(
@@ -191,9 +225,15 @@ class _DailyMenuSection extends StatelessWidget {
 }
 
 class _ProductTile extends StatelessWidget {
-  const _ProductTile({required this.product});
+  const _ProductTile({
+    required this.product,
+    required this.canOrder,
+    required this.onAdd,
+  });
 
   final Product product;
+  final bool canOrder;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -206,6 +246,14 @@ class _ProductTile extends StatelessWidget {
       title: Text(product.name),
       subtitle: details.isEmpty ? null : Text(details.join(' · ')),
       trailing: Text(_formatPrice(product.price)),
+      onTap: canOrder && product.available ? onAdd : null,
+      leading: canOrder && product.available
+          ? IconButton(
+              tooltip: 'Agregar al carrito',
+              onPressed: onAdd,
+              icon: const Icon(Icons.add_shopping_cart),
+            )
+          : null,
     );
   }
 }

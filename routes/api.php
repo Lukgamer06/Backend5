@@ -25,6 +25,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::patch('/incidencias/{incidencia}', [IncidentController::class, 'update'])->name('incidencias.update');
 
         Route::get('/reservas', [ReservationController::class, 'index'])->name('reservas.index');
+        Route::get('/reservas/disponibilidad', [ReservationController::class, 'availableTables'])
+            ->name('reservas.disponibilidad');
         Route::post('/reservas', [ReservationController::class, 'store'])->name('reservas.store');
         Route::get('/reservas/{reserva}', [ReservationController::class, 'show'])->name('reservas.show');
         Route::patch('/reservas/{reserva}', [ReservationController::class, 'update'])->name('reservas.update');

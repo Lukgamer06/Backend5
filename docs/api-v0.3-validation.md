@@ -25,7 +25,7 @@
 - [x] Errores estandarizados para 401, 403, 404, 405, 409, 422 y 429; los errores inesperados API responden 500 sin exponer detalles internos.
 - [x] Rutas registradas verificadas con `php artisan route:list --path=api/v1`.
 - [x] Respuestas y permisos cubiertos por pruebas feature API.
-- [x] Colección y entorno Postman en formato JSON válidos; cubren las 27 rutas registradas e incluyen respuestas de ejemplo.
+- [x] Colección y entorno Postman en formato JSON válidos; cubren las 28 rutas registradas e incluyen respuestas de ejemplo.
 - [x] No hay endpoint REST `DELETE` en el alcance de v0.3. Un `DELETE /api/v1/reservas/{id}` no soportado responde 405 estandarizado. No se genera respuesta 204 porque ningún endpoint actual realiza borrado.
 
 ## Checklist funcional
@@ -33,7 +33,7 @@
 - [x] Login correcto devuelve token y datos públicos del usuario; credenciales inválidas devuelven 401 y entradas inválidas devuelven 422.
 - [x] Logout revoca solo el token actual; `GET /me` devuelve el perfil autenticado sin devolver el token.
 - [x] Reservas: listado paginado y filtrable, detalle con control de ownership, creación, actualización parcial y cancelación.
-- [x] Disponibilidad de mesa y conflicto de reserva gestionados por `AvailabilityService`; los conflictos devuelven 409.
+- [x] Disponibilidad de mesas consultable por horario y aforo; solo devuelve mesas habilitadas, con capacidad suficiente y sin reservas conflictivas. La creación vuelve a validar disponibilidad y los conflictos devuelven 409.
 - [x] Pedidos: listado paginado y filtrable, detalle, creación con total calculado en servidor, actualización, cancelación y transición de estado.
 - [x] Acciones de pedido respetan ownership, rol y transiciones; transiciones no permitidas devuelven 409.
 - [x] Catálogo: listado paginado, búsqueda y detalle; usuarios no administradores no ven productos inactivos.
@@ -57,8 +57,8 @@ Entorno de ejecución del proyecto durante esta validación: contenedor `hostalc
 
 Resultado final:
 
-- 27 rutas `/api/v1` registradas.
-- 132 pruebas aprobadas (829 assertions).
+- 28 rutas `/api/v1` registradas.
+- 135 pruebas aprobadas (850 assertions).
 - Pint aprobado.
 - `git diff --check` aprobado.
 - JSON de colección y entorno Postman parseados y validados.

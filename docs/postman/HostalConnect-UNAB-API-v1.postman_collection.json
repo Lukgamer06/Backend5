@@ -342,6 +342,33 @@
       "name": "Reservas",
       "item": [
         {
+          "name": "Consultar mesas disponibles",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/v1/reservas/disponibilidad?fecha_inicio=2026-12-10T18%3A00&fecha_fin=2026-12-10T19%3A00&numero_personas=2",
+            "description": "Requiere un cliente autenticado con permiso para reservar. Devuelve únicamente mesas habilitadas, con capacidad suficiente y libres en el intervalo. Parámetros obligatorios: fecha_inicio y fecha_fin con formato Y-m-dTH:i, numero_personas entre 1 y 255. La creación vuelve a comprobar disponibilidad para evitar conflictos concurrentes."
+          },
+          "response": [
+            {
+              "name": "200 - Mesas disponibles",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": [{\"id\": 1, \"numero\": 1, \"capacidad\": 4}],\n  \"links\": {},\n  \"meta\": {},\n  \"message\": \"Mesas disponibles consultadas correctamente.\"\n}"
+            },
+            {
+              "name": "422 - Validación",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"data\": null,\n  \"message\": \"Los datos enviados no son válidos.\",\n  \"meta\": {\"errors\": {\"fecha_fin\": [\"The fecha fin field must be a date after fecha inicio.\"]}}\n}"
+            }
+          ]
+        },
+        {
           "name": "Listar reservas",
           "request": {
             "method": "GET",

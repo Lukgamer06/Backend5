@@ -49,6 +49,21 @@ class ReservationService
     }
 
     /**
+     * @return Collection<int, Mesa>
+     */
+    public function availableTables(
+        DateTimeInterface $fechaInicio,
+        DateTimeInterface $fechaFin,
+        int $numeroPersonas,
+    ): Collection {
+        return $this->availabilityService->availableTables(
+            $fechaInicio,
+            $fechaFin,
+            $numeroPersonas,
+        );
+    }
+
+    /**
      * @return array{clientes: Collection<int, Cliente>, mesas: Collection<int, Mesa>}
      */
     public function formOptions(Usuario $usuario): array

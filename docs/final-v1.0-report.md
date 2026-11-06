@@ -1,7 +1,8 @@
 # Informe final de cierre — HostalConnect UNAB v1.0
 
-**Fecha de revisión:** 2026-11-05  
-**Rama revisada:** `feature/v0.4-flutter-client`  
+**Fecha de revisión:** 2026-11-05
+
+**Rama revisada:** `feature/v0.4-flutter-client`
 **Tipo de cierre:** auditoría final de entrega académica; no es certificación de producción.
 
 ## Resumen ejecutivo

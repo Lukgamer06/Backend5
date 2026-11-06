@@ -6,6 +6,11 @@ import 'package:hostalconnect_mobile/features/auth/providers/auth_controller.dar
 import 'package:hostalconnect_mobile/features/auth/repositories/auth_repository.dart';
 import 'package:hostalconnect_mobile/features/auth/screens/home_screen.dart';
 import 'package:hostalconnect_mobile/features/auth/screens/login_screen.dart';
+import 'package:hostalconnect_mobile/features/catalog/models/daily_menu.dart';
+import 'package:hostalconnect_mobile/features/catalog/models/product.dart';
+import 'package:hostalconnect_mobile/features/catalog/models/product_page.dart';
+import 'package:hostalconnect_mobile/features/catalog/providers/catalog_controller.dart';
+import 'package:hostalconnect_mobile/features/catalog/repositories/catalog_repository.dart';
 import 'package:hostalconnect_mobile/routes/app_router.dart';
 import 'package:provider/provider.dart';
 
@@ -13,12 +18,17 @@ void main() {
   testWidgets('login navigates to the protected home screen', (tester) async {
     final controller = AuthController(_FakeAuthRepository());
     await controller.restoreSession();
+    final catalogController = CatalogController(_FakeCatalogRepository());
+    await catalogController.load();
     final router = createAppRouter(controller);
 
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthController>.value(
         value: controller,
-        child: MaterialApp.router(routerConfig: router),
+        child: ChangeNotifierProvider<CatalogController>.value(
+          value: catalogController,
+          child: MaterialApp.router(routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -37,7 +47,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Bienvenido, Ana Pérez'), findsOneWidget);
+    expect(find.text('Hola, Ana'), findsOneWidget);
+    expect(find.text('Sopa del día'), findsOneWidget);
+    expect(find.text('Menú del día'), findsOneWidget);
 
     await tester.tap(find.text('Cerrar sesión'));
     await tester.pumpAndSettle();
@@ -46,6 +58,7 @@ void main() {
 
     router.dispose();
     controller.dispose();
+    catalogController.dispose();
   });
 
   testWidgets('unauthenticated users cannot remain on the protected route', (
@@ -53,12 +66,17 @@ void main() {
   ) async {
     final controller = AuthController(_FakeAuthRepository());
     await controller.restoreSession();
+    final catalogController = CatalogController(_FakeCatalogRepository());
+    await catalogController.load();
     final router = createAppRouter(controller);
 
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthController>.value(
         value: controller,
-        child: MaterialApp.router(routerConfig: router),
+        child: ChangeNotifierProvider<CatalogController>.value(
+          value: catalogController,
+          child: MaterialApp.router(routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -68,6 +86,7 @@ void main() {
 
     router.dispose();
     controller.dispose();
+    catalogController.dispose();
   });
 
   test(
@@ -91,6 +110,48 @@ void main() {
       controller.dispose();
     },
   );
+}
+
+class _FakeCatalogRepository implements CatalogRepository {
+  @override
+  Future<ProductPage> getProducts({
+    required int page,
+    required int perPage,
+    String? search,
+  }) async {
+    return const ProductPage(
+      products: [
+        Product(
+          id: 1,
+          name: 'Sopa del día',
+          description: 'Sopa casera',
+          price: 12500,
+          available: true,
+        ),
+      ],
+      currentPage: 1,
+      lastPage: 1,
+      total: 1,
+    );
+  }
+
+  @override
+  Future<DailyMenu> getDailyMenu() async {
+    return DailyMenu(
+      id: 1,
+      date: DateTime(2026, 11, 5),
+      status: 'PUBLICADO',
+      products: const [
+        Product(
+          id: 1,
+          name: 'Sopa del día',
+          description: 'Sopa casera',
+          price: 12500,
+          available: true,
+        ),
+      ],
+    );
+  }
 }
 
 class _FakeAuthRepository implements AuthRepository {

@@ -157,6 +157,7 @@ void main() {
       final apiClient = ApiClient(
         config: const ApiConfig(baseUrl: 'https://api.example.test'),
         httpClient: client,
+        accessTokenProvider: () async => 'token-123',
         unauthorizedHandler: () async {
           unauthorizedCalls++;
         },
@@ -165,6 +166,48 @@ void main() {
       await expectLater(apiClient.get('me'), throwsA(isA<ApiException>()));
 
       expect(unauthorizedCalls, 1);
+    });
+
+    test('does not expire a session for a public login 401', () async {
+      var unauthorizedCalls = 0;
+      final client = _FakeHttpClient(
+        (request) async => _jsonResponse({
+          'data': null,
+          'message': 'No autenticado.',
+          'meta': {},
+        }, statusCode: 401),
+      );
+      final apiClient = ApiClient(
+        config: const ApiConfig(baseUrl: 'https://api.example.test'),
+        httpClient: client,
+        unauthorizedHandler: () async {
+          unauthorizedCalls++;
+        },
+      );
+
+      await expectLater(
+        apiClient.post('login', body: {'correo': 'a@b.test'}),
+        throwsA(isA<ApiException>()),
+      );
+
+      expect(unauthorizedCalls, 0);
+    });
+  });
+
+  group('ApiException', () {
+    test('reads retry delay from Laravel meta when no header is present', () {
+      final exception = ApiException.fromResponse(
+        http.Response(
+          jsonEncode({
+            'data': null,
+            'message': 'Demasiadas solicitudes.',
+            'meta': {'retry_after': 45},
+          }),
+          429,
+        ),
+      );
+
+      expect(exception.retryAfter, const Duration(seconds: 45));
     });
   });
 }

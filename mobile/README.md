@@ -27,6 +27,6 @@ El cliente agrega `Accept: application/json`, serializa cuerpos como JSON y lee 
 
 El inicio de sesión usa `POST /api/v1/login` con `correo` y `password`. El token Sanctum se guarda únicamente en el almacenamiento seguro; las credenciales no se persisten. Al abrir la app se consulta `GET /api/v1/me` para restaurar la sesión. El cierre usa `POST /api/v1/logout` y elimina el token local incluso si la API no está disponible. Las respuestas 401 invalidan la sesión y redirigen al login.
 
-La ruta `/` requiere una sesión autenticada. La pantalla inicial muestra el perfil autenticado como destino temporal hasta que se implementen los módulos funcionales.
+La ruta `/` requiere una sesión autenticada y muestra el catálogo permitido para el rol autenticado y el menú publicado para hoy. Los productos inactivos que pueda consultar un administrador se identifican como no disponibles. El catálogo acepta búsqueda y usa la paginación devuelta por Laravel. La falta de un menú publicado se presenta como estado vacío; otros errores conservan su mensaje y permiten reintentar.
 
 El repositorio API y Flutter comparten el mismo proyecto Git, pero el código móvil vive aislado en `mobile/`.

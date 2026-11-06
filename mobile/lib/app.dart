@@ -11,6 +11,8 @@ import 'core/network/api_config.dart';
 import 'core/storage/token_storage.dart';
 import 'features/auth/providers/auth_controller.dart';
 import 'features/auth/repositories/auth_repository.dart';
+import 'features/catalog/providers/catalog_controller.dart';
+import 'features/catalog/repositories/catalog_repository.dart';
 import 'routes/app_router.dart';
 
 class HostalConnectApp extends StatelessWidget {
@@ -51,10 +53,23 @@ class HostalConnectApp extends StatelessWidget {
             tokenStorage: context.read<TokenStorage>(),
           ),
         ),
+        Provider<CatalogRepository>(
+          create: (context) => ApiCatalogRepository(context.read<ApiClient>()),
+        ),
         ChangeNotifierProvider<AuthController>(
           create: (context) {
             final controller = AuthController(context.read<AuthRepository>());
             unawaited(controller.restoreSession());
+
+            return controller;
+          },
+        ),
+        ChangeNotifierProvider<CatalogController>(
+          create: (context) {
+            final controller = CatalogController(
+              context.read<CatalogRepository>(),
+            );
+            unawaited(controller.load());
 
             return controller;
           },

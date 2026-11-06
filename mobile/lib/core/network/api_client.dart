@@ -18,8 +18,6 @@ class ApiClient {
     this._unauthorizedHandler,
   });
 
-  static const accessTokenStorageKey = 'sanctum_access_token';
-
   final ApiConfig _config;
   final http.Client _httpClient;
   final AccessTokenProvider? _accessTokenProvider;
@@ -81,7 +79,9 @@ class ApiClient {
         streamedResponse,
       ).timeout(_config.requestTimeout);
 
-      if (response.statusCode == 401) {
+      if (response.statusCode == 401 &&
+          accessToken != null &&
+          accessToken.isNotEmpty) {
         await _unauthorizedHandler?.call();
       }
 

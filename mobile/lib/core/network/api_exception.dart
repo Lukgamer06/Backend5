@@ -28,15 +28,19 @@ class ApiException implements Exception {
         : bodyMessage is String && bodyMessage.isNotEmpty
         ? bodyMessage
         : _fallbackMessage(statusCode);
-    final retryAfterSeconds = int.tryParse(
-      response.headers['retry-after'] ?? '',
-    );
+    final meta = payload['meta'];
+    final metaRetryAfter = meta is Map ? meta['retry_after'] : null;
+    final retryAfterSeconds =
+        int.tryParse(response.headers['retry-after'] ?? '') ??
+        (metaRetryAfter is int
+            ? metaRetryAfter
+            : int.tryParse(metaRetryAfter?.toString() ?? ''));
 
     return ApiException(
       statusCode: statusCode,
       message: safeMessage,
       validationErrors: _validationErrors(payload['meta']),
-      retryAfter: retryAfterSeconds == null
+      retryAfter: retryAfterSeconds == null || retryAfterSeconds < 0
           ? null
           : Duration(seconds: retryAfterSeconds),
     );

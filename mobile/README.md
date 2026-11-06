@@ -19,7 +19,22 @@ flutter test
 
 La app registra `http.Client`, `FlutterSecureStorage`, `ApiConfig` y `ApiClient` con Provider y configura GoRouter. La infraestructura API vive en `lib/core/network/` y usa el prefijo `/api/v1`.
 
-La URL base se configura al compilar con `--dart-define=API_BASE_URL=...`. El valor local por defecto `http://10.0.2.2:8080` es para el emulador Android accediendo a Laravel en el host. Para iOS Simulator usa `http://localhost:8080`; en un dispositivo físico usa la dirección LAN del host. En entornos desplegados usa HTTPS.
+El ambiente y la URL se configuran al compilar con `APP_ENV` (`development`, `staging` o `production`) y `API_BASE_URL`. Desarrollo usa por defecto `http://10.0.2.2:8080` para el emulador Android; para iOS Simulator define `http://localhost:8080`, y para un dispositivo físico define la dirección LAN del host. Staging y producción requieren una URL explícita con HTTPS y rechazan hosts locales. Producción también rechaza direcciones IP y dominios reservados/de ejemplo; la app valida el formato y la clase de host, pero la existencia y titularidad del dominio deben verificarse al desplegar.
+
+Ejemplos de ejecución desde `mobile/`:
+
+```bash
+# Android Emulator conectado a Laravel en el host
+flutter run --dart-define=APP_ENV=development --dart-define=API_BASE_URL=http://10.0.2.2:8080
+
+# Sustituye el dominio de ejemplo por el host HTTPS real de staging
+flutter run --dart-define=APP_ENV=staging --dart-define=API_BASE_URL=https://staging-api.example.org
+
+# Sustituye por el dominio público real de producción
+flutter build appbundle --release --dart-define=APP_ENV=production --dart-define=API_BASE_URL=https://api.tu-dominio-real.edu.co
+```
+
+`API_BASE_URL` no es un secreto y debe apuntar al origen, sin ruta `/api/v1`, credenciales, query ni fragmento. No pases claves, contraseñas ni tokens mediante `--dart-define`.
 
 El cliente agrega `Accept: application/json`, serializa cuerpos como JSON y lee el token opcional de `flutter_secure_storage` mediante un callback asíncrono. El token usa la clave `sanctum_access_token`. Las respuestas de error se transforman en `ApiException` sin exponer detalles del servidor en errores 5xx.
 

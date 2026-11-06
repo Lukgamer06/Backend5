@@ -29,6 +29,7 @@ class ReservationsApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Reservas consultadas correctamente.')
             ->assertJsonPath('data.0.id', $propia->id)
+            ->assertJsonPath('data.0.mesa.numero', $propia->mesa->numero)
             ->assertJsonPath('meta.per_page', 1)
             ->assertJsonStructure(['data', 'links', 'meta', 'message']);
     }

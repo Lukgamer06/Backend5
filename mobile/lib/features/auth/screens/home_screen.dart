@@ -34,6 +34,13 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Catálogo'),
         actions: [
+          if (user?.rol == 'CLIENTE')
+            IconButton(
+              key: const Key('open-reservations'),
+              tooltip: 'Mis reservas',
+              onPressed: () => context.push('/reservas'),
+              icon: const Icon(Icons.event_available),
+            ),
           IconButton(
             tooltip: 'Mis pedidos',
             onPressed: () => context.push('/pedidos'),

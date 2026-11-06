@@ -17,6 +17,8 @@ import 'features/orders/providers/order_controller.dart';
 import 'features/orders/repositories/order_repository.dart';
 import 'features/payments/providers/payment_controller.dart';
 import 'features/payments/repositories/payment_repository.dart';
+import 'features/reservations/providers/reservation_controller.dart';
+import 'features/reservations/repositories/reservation_repository.dart';
 import 'routes/app_router.dart';
 
 class HostalConnectApp extends StatelessWidget {
@@ -66,6 +68,10 @@ class HostalConnectApp extends StatelessWidget {
         Provider<PaymentRepository>(
           create: (context) => ApiPaymentRepository(context.read<ApiClient>()),
         ),
+        Provider<ReservationRepository>(
+          create: (context) =>
+              ApiReservationRepository(context.read<ApiClient>()),
+        ),
         ChangeNotifierProvider<AuthController>(
           create: (context) {
             final controller = AuthController(context.read<AuthRepository>());
@@ -90,6 +96,10 @@ class HostalConnectApp extends StatelessWidget {
         ChangeNotifierProvider<PaymentController>(
           create: (context) =>
               PaymentController(context.read<PaymentRepository>()),
+        ),
+        ChangeNotifierProvider<ReservationController>(
+          create: (context) =>
+              ReservationController(context.read<ReservationRepository>()),
         ),
         Provider<GoRouter>(
           create: (context) => createAppRouter(context.read<AuthController>()),

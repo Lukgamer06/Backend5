@@ -383,7 +383,7 @@
               "code": 200,
               "_postman_previewlanguage": "json",
               "header": [],
-              "body": "{\n  \"data\": [{\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"mesa_id\": 1, \"fecha_inicio\": \"2026-12-10T18:00:00-05:00\", \"fecha_fin\": \"2026-12-10T19:00:00-05:00\", \"numero_personas\": 2, \"estado\": \"CONFIRMADA\", \"observaciones\": null, \"usuario\": null, \"cliente\": null}],\n  \"links\": {\"first\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"last\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"prev\": null, \"next\": null},\n  \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"path\": \"{{baseUrl}}/api/v1/reservas\", \"per_page\": 15, \"to\": 1, \"total\": 1},\n  \"message\": \"Reservas consultadas correctamente.\"\n}"
+              "body": "{\n  \"data\": [{\"id\": 1, \"usuario_id\": 1, \"cliente_id\": 1, \"mesa_id\": 1, \"fecha_inicio\": \"2026-12-10T18:00:00-05:00\", \"fecha_fin\": \"2026-12-10T19:00:00-05:00\", \"numero_personas\": 2, \"estado\": \"CONFIRMADA\", \"observaciones\": null, \"mesa\": {\"id\": 1, \"numero\": 1, \"capacidad\": 4}, \"usuario\": null, \"cliente\": null}],\n  \"links\": {\"first\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"last\": \"{{baseUrl}}/api/v1/reservas?page=1\", \"prev\": null, \"next\": null},\n  \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"path\": \"{{baseUrl}}/api/v1/reservas\", \"per_page\": 15, \"to\": 1, \"total\": 1},\n  \"message\": \"Reservas consultadas correctamente.\"\n}"
             }
           ]
         },

@@ -6,6 +6,7 @@ import '../features/auth/screens/home_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/orders/screens/create_order_screen.dart';
 import '../features/orders/screens/order_history_screen.dart';
+import '../features/reservations/screens/reservation_screen.dart';
 
 GoRouter createAppRouter(AuthController authController) {
   return GoRouter(
@@ -31,6 +32,10 @@ GoRouter createAppRouter(AuthController authController) {
       GoRoute(
         path: '/pedidos/nuevo',
         builder: (context, state) => const CreateOrderScreen(),
+      ),
+      GoRoute(
+        path: '/reservas',
+        builder: (context, state) => const ReservationScreen(),
       ),
       GoRoute(
         path: '/loading',

@@ -20,6 +20,7 @@ class ReservaResource extends ApiResource
             'numero_personas' => $this->numero_personas,
             'estado' => $this->estado->value,
             'observaciones' => $this->observaciones,
+            'mesa' => MesaDisponibleResource::make($this->whenLoaded('mesa')),
             'usuario' => UsuarioResource::make($this->whenLoaded('usuario')),
             'cliente' => ClienteResource::make($this->whenLoaded('cliente')),
         ];

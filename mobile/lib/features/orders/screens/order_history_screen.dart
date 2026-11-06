@@ -57,7 +57,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: controller.loadOrders,
-        child: _buildBody(context, controller),
+        child: _buildBody(context, controller, paymentController),
       ),
       floatingActionButton: controller.cartItemCount == 0
           ? null
@@ -70,7 +70,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     );
   }
 
-  Widget _buildBody(BuildContext context, OrderController controller) {
+  Widget _buildBody(
+    BuildContext context,
+    OrderController controller,
+    PaymentController paymentController,
+  ) {
     if (controller.isLoadingOrders && controller.orders.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -291,21 +295,21 @@ class _PaymentSection extends StatelessWidget {
               child: Text(
                 'Hay un pago pendiente de confirmación. No envíes otra solicitud.',
               ),
-            )
-          else if (error != null)
+            ),
+          if (error != null && !isPending)
             TextButton(
               onPressed: isBusy
                   ? null
                   : () => controller.loadForOrder(order.id),
               child: const Text('Reintentar consulta'),
             )
-          else if (canSubmit) ...[
+          else if (canSubmit || isPending) ...[
             Wrap(
               spacing: 8,
               children: [
                 OutlinedButton(
                   key: Key('online-payment-${order.id}'),
-                  onPressed: isBusy
+                  onPressed: isBusy || isPending
                       ? null
                       : () => _submitPayment(
                           context,
@@ -315,7 +319,7 @@ class _PaymentSection extends StatelessWidget {
                 ),
                 OutlinedButton(
                   key: Key('in-person-payment-${order.id}'),
-                  onPressed: isBusy
+                  onPressed: isBusy || isPending
                       ? null
                       : () => _submitPayment(
                           context,

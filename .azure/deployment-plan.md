@@ -109,7 +109,8 @@ Antes del despliegue no existían VMs, discos ni IP públicas del proyecto en Ce
 - [x] Verificar web (`/up`), API, autenticación/roles y TLS; probar que el teléfono alcanza TCP 443.
 - [x] Compilar APK debug con entorno `production` y el FQDN HTTPS, e instalarlo por ADB.
 - [ ] Completar login visual desde Flutter en el teléfono y resolver/revisar la advertencia Safe Browsing antes de compartir el dominio públicamente.
-- [ ] Publicar cambios en `main` sin incluir credenciales/secretos y verificar GitHub Actions.
+- [x] Publicar el commit `b5358ca` en `main`; la búsqueda de secretos no encontró IDs de suscripción/tenant, claves, IP de origen ni contraseña en los archivos publicados.
+- [x] Confirmar que GitHub Actions no inició un run para este push porque `Mobile CI` solo filtra cambios de `mobile/**` o del propio workflow; Laravel/Pint y Flutter se validaron localmente.
 
 ## 9. Flujo obligatorio
 

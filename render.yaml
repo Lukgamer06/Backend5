@@ -1,0 +1,85 @@
+services:
+  - type: pserv
+    name: hostalconnect-mysql
+    runtime: docker
+    region: ohio
+    plan: 1c-2g
+    dockerfilePath: ./Dockerfile.mysql
+    dockerContext: .
+    disk:
+      name: hostalconnect-mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+    envVars:
+      - key: MYSQL_DATABASE
+        value: hostalconnect
+      - key: MYSQL_USER
+        value: hostalconnect
+      - key: MYSQL_PASSWORD
+        generateValue: true
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+
+  - type: web
+    name: hostalconnect-unab
+    runtime: docker
+    region: ohio
+    plan: 1c-2g
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /up
+    preDeployCommand: php artisan migrate --force
+    envVars:
+      - key: APP_NAME
+        value: HostalConnect UNAB
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        sync: false
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        sync: false
+      - key: APP_LOCALE
+        value: es
+      - key: APP_FALLBACK_LOCALE
+        value: es
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: warning
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        value: hostalconnect-mysql
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_DATABASE
+        value: hostalconnect
+      - key: DB_USERNAME
+        value: hostalconnect
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: hostalconnect-mysql
+          envVarKey: MYSQL_PASSWORD
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: SESSION_ENCRYPT
+        value: "true"
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: SESSION_HTTP_ONLY
+        value: "true"
+      - key: SESSION_SAME_SITE
+        value: lax
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: MAIL_MAILER
+        value: log

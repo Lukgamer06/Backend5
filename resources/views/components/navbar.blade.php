@@ -1,6 +1,9 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark app-navbar">
     <div class="container-fluid px-3 px-lg-4">
-        <a class="navbar-brand fw-semibold" href="{{ route('home') }}">HostalConnect UNAB</a>
+        <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="{{ route('home') }}">
+            <span class="brand-mark" aria-hidden="true">HC</span>
+            <span>HostalConnect <span class="brand-unab">UNAB</span></span>
+        </a>
 
         <button
             class="navbar-toggler d-lg-none"

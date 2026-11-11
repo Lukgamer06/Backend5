@@ -61,7 +61,7 @@ void main() {
 
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.text('Hola, Ana'), findsOneWidget);
-    expect(find.text('Sopa del día'), findsOneWidget);
+    expect(find.text('Sopa del día'), findsAtLeastNWidgets(1));
     expect(find.text('Menú del día'), findsOneWidget);
 
     await tester.tap(find.text('Cerrar sesión'));

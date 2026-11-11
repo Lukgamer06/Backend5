@@ -75,6 +75,36 @@ flutter build ipa --release \
 
 El permiso de red es explícito. Android permite HTTP claro solo en variantes debug/profile para servidores locales; release exige TLS. iOS mantiene ATS y permite networking local para desarrollo, sin habilitar HTTP arbitrario. Estos archivos dejan preparada la configuración, pero los artefactos firmados y la publicación no se pueden validar desde Linux sin Android SDK/keystore o macOS/Xcode/cuenta Apple.
 
+## Instalar en un Android físico
+
+En el computador instala Flutter, Android SDK Platform Tools (`adb`) y las herramientas Android requeridas por Flutter. En el teléfono activa **Opciones de desarrollador → Depuración USB**, conéctalo por USB y acepta el diálogo de autorización. Desde `mobile/`, verifica que Flutter detecte el teléfono:
+
+```bash
+flutter doctor
+flutter devices
+adb devices
+```
+
+Para probar el backend local sin exponerlo a la red, crea un túnel ADB y ejecuta la variante debug:
+
+```bash
+adb reverse tcp:8080 tcp:8080
+flutter run \
+  --dart-define=APP_ENV=development \
+  --dart-define=API_BASE_URL=http://127.0.0.1:8080
+```
+
+Para generar un APK instalable de pruebas que consuma Render, reemplaza el dominio por el HTTPS real:
+
+```bash
+flutter build apk --debug \
+  --dart-define=APP_ENV=development \
+  --dart-define=API_BASE_URL=https://hostalconnect-unab.onrender.com
+adb install -r build/app/outputs/flutter-apk/app-debug.apk
+```
+
+El APK queda en `build/app/outputs/flutter-apk/app-debug.apk`. Es una compilación debug para pruebas, no un artefacto de publicación. Para una versión release instala primero la firma de Android indicada arriba, usa `APP_ENV=production` y una URL HTTPS real, y genera el APK con `flutter build apk --release`. Confirma que el backend Render esté desplegado y `/up` responda antes de probar el cliente.
+
 El cliente agrega `Accept: application/json`, serializa cuerpos como JSON y lee el token opcional de `flutter_secure_storage` mediante un callback asíncrono. El token usa la clave `sanctum_access_token`. Las respuestas de error se transforman en `ApiException` sin exponer detalles del servidor en errores 5xx.
 
 ## Autenticación

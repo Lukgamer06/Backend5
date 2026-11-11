@@ -34,33 +34,38 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Catálogo'),
         actions: [
-          if (user?.rol == 'CLIENTE')
-            IconButton(
-              key: const Key('open-reservations'),
-              tooltip: 'Mis reservas',
-              onPressed: () => context.push('/reservas'),
-              icon: const Icon(Icons.event_available),
-            ),
-          if (user?.rol == 'ADMINISTRADOR' || user?.rol == 'OPERADOR')
-            IconButton(
-              key: const Key('open-incidents'),
-              tooltip: 'Incidencias',
-              onPressed: () => context.push('/incidencias'),
-              icon: const Icon(Icons.report_problem_outlined),
-            ),
-          if (user?.rol == 'ADMINISTRADOR' || user?.rol == 'OPERADOR')
-            IconButton(
-              key: const Key('manage-daily-menu'),
-              tooltip: 'Administrar menú del día',
-              onPressed: () => context.push('/menus/administrar'),
-              icon: const Icon(Icons.restaurant_menu),
-            ),
-          IconButton(
-            tooltip: user?.rol == 'ADMINISTRADOR' || user?.rol == 'OPERADOR'
-                ? 'Gestión de pedidos'
-                : 'Mis pedidos',
-            onPressed: () => context.push('/pedidos'),
-            icon: const Icon(Icons.receipt_long),
+          PopupMenuButton<String>(
+            tooltip: 'Abrir secciones',
+            onSelected: (route) => context.push(route),
+            itemBuilder: (context) => [
+              if (user?.rol == 'CLIENTE')
+                const PopupMenuItem(
+                  key: Key('open-reservations'),
+                  value: '/reservas',
+                  child: Text('Mis reservas'),
+                ),
+              if (user?.rol == 'ADMINISTRADOR' || user?.rol == 'OPERADOR')
+                const PopupMenuItem(
+                  key: Key('open-incidents'),
+                  value: '/incidencias',
+                  child: Text('Incidencias'),
+                ),
+              if (user?.rol == 'ADMINISTRADOR' || user?.rol == 'OPERADOR')
+                const PopupMenuItem(
+                  key: Key('manage-daily-menu'),
+                  value: '/menus/administrar',
+                  child: Text('Administrar menú del día'),
+                ),
+              PopupMenuItem(
+                value: '/pedidos',
+                child: Text(
+                  user?.rol == 'ADMINISTRADOR' || user?.rol == 'OPERADOR'
+                      ? 'Gestión de pedidos'
+                      : 'Mis pedidos',
+                ),
+              ),
+            ],
+            icon: const Icon(Icons.grid_view_rounded),
           ),
           TextButton(
             onPressed: authController.isLoading ? null : authController.logout,
@@ -89,17 +94,86 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (user != null)
-                      Text(
-                        'Hola, ${user.nombres}',
-                        style: Theme.of(context).textTheme.titleLarge,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(context).colorScheme.primary.withValues(
+                                alpha: 0.84,
+                              ),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 25,
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.16,
+                              ),
+                              child: Text(
+                                user.nombres.isEmpty
+                                    ? 'H'
+                                    : user.nombres.substring(0, 1).toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Hola, ${user.nombres}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(color: Colors.white),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    user.rol == 'CLIENTE'
+                                        ? '¿Qué te gustaría disfrutar hoy?'
+                                        : 'Panel de operación del hostal',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.82,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    const SizedBox(height: 16),
-                    _DailyMenuSection(controller: catalogController),
                     const SizedBox(height: 20),
+                    _DailyMenuSection(controller: catalogController),
+                    const SizedBox(height: 24),
                     Text(
-                      'Productos',
+                      'Explora el catálogo',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Encuentra algo para disfrutar.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     TextField(
                       key: const Key('product-search'),
                       controller: _searchController,
@@ -117,7 +191,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           icon: const Icon(Icons.clear),
                         ),
-                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -220,25 +293,80 @@ class _DailyMenuSection extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Menú del día', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 21,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.08),
+                  child: Icon(
+                    Icons.restaurant_menu_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Menú del día',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Text(
+                        'Una selección preparada para hoy',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
             if (controller.isLoadingMenu)
               const LinearProgressIndicator()
             else if (controller.menuError case final error?)
               _ErrorMessage(message: error, onRetry: controller.loadDailyMenu)
             else if (menu == null)
-              const Text('El menú de hoy todavía no está publicado.')
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text('El menú de hoy todavía no está publicado.'),
+              )
             else ...[
-              Text(
-                '${menu.date.day.toString().padLeft(2, '0')}/${menu.date.month.toString().padLeft(2, '0')}/${menu.date.year}',
-              ),
-              const SizedBox(height: 8),
               for (final product in menu.products)
-                Text('${product.name} · ${_formatPrice(product.price)}'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(product.name)),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatPrice(product.price),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ],
         ),
@@ -265,18 +393,51 @@ class _ProductTile extends StatelessWidget {
       if (!product.available) 'No disponible',
     ];
 
-    return ListTile(
-      title: Text(product.name),
-      subtitle: details.isEmpty ? null : Text(details.join(' · ')),
-      trailing: Text(_formatPrice(product.price)),
-      onTap: canOrder && product.available ? onAdd : null,
-      leading: canOrder && product.available
-          ? IconButton(
-              tooltip: 'Agregar al carrito',
-              onPressed: onAdd,
-              icon: const Icon(Icons.add_shopping_cart),
-            )
-          : null,
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(
+            context,
+          ).colorScheme.primary.withValues(alpha: 0.08),
+          child: Icon(
+            Icons.restaurant_rounded,
+            color: Theme.of(context).colorScheme.primary,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          product.name,
+          style: Theme.of(context).textTheme.titleMedium,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: details.isEmpty
+            ? null
+            : Text(
+                details.join(' · '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _formatPrice(product.price),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            if (canOrder && product.available)
+              IconButton(
+                tooltip: 'Agregar al carrito',
+                onPressed: onAdd,
+                icon: const Icon(Icons.add_shopping_cart_rounded),
+              ),
+          ],
+        ),
+        onTap: canOrder && product.available ? onAdd : null,
+      ),
     );
   }
 }

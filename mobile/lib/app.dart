@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'core/network/api_client.dart';
 import 'core/network/api_config.dart';
 import 'core/storage/token_storage.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/providers/auth_controller.dart';
 import 'features/auth/repositories/auth_repository.dart';
 import 'features/catalog/providers/catalog_controller.dart';
@@ -123,12 +124,7 @@ class HostalConnectApp extends StatelessWidget {
       child: Builder(
         builder: (context) => MaterialApp.router(
           title: 'HostalConnect UNAB',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF00529B),
-            ),
-            useMaterial3: true,
-          ),
+          theme: AppTheme.light(),
           routerConfig: context.watch<GoRouter>(),
         ),
       ),

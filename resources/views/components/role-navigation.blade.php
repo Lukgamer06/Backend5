@@ -2,33 +2,29 @@
     $roleNavigation = config('role-navigation.'.auth()->user()->rol->value, []);
 @endphp
 
-<nav aria-label="Secciones asignadas a tu rol">
-    <p class="small text-body-secondary mb-2">Secciones asignadas a tu rol</p>
-    <ul class="nav nav-pills flex-column gap-1">
+<nav aria-label="Navegación principal">
+    <ul class="nav nav-pills flex-column gap-2">
         <li class="nav-item">
-            <a class="nav-link" href="{{ route('home') }}">Inicio</a>
+            <a
+                class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}"
+                href="{{ route('home') }}"
+                @if (request()->routeIs('home')) aria-current="page" @endif
+            >
+                <span class="nav-link-mark" aria-hidden="true">01</span>
+                Inicio
+            </a>
         </li>
-        @foreach ($roleNavigation as $module)
+        @foreach ($roleNavigation as $label => $item)
             <li class="nav-item">
-                @if (in_array($module, ['Reservas', 'Mis reservas'], true))
-                    <a class="nav-link" href="{{ route('reservations.index') }}">{{ $module }}</a>
-                @elseif (in_array($module, ['Pedidos', 'Mis pedidos'], true))
-                    <a class="nav-link" href="{{ route('orders.index') }}">{{ $module }}</a>
-                @elseif ($module === 'Productos')
-                    <a class="nav-link" href="{{ route('products.index') }}">{{ $module }}</a>
-                @elseif ($module === 'Menú del día')
-                    <a class="nav-link" href="{{ route('menus.index') }}">{{ $module }}</a>
-                @elseif ($module === 'Incidencias')
-                    <a class="nav-link" href="{{ route('incidents.index') }}">{{ $module }}</a>
-                @elseif ($module === 'Pagos')
-                    <a class="nav-link" href="{{ route('payments.index') }}">{{ $module }}</a>
-                @else
-                    <span class="nav-link text-body-secondary" aria-disabled="true">{{ $module }}</span>
-                @endif
+                <a
+                    class="nav-link {{ request()->routeIs($item['active']) ? 'active' : '' }}"
+                    href="{{ route($item['route']) }}"
+                    @if (request()->routeIs($item['active'])) aria-current="page" @endif
+                >
+                    <span class="nav-link-mark" aria-hidden="true">{{ str_pad((string) ($loop->iteration + 1), 2, '0', STR_PAD_LEFT) }}</span>
+                    {{ $label }}
+                </a>
             </li>
         @endforeach
     </ul>
-    <p class="small text-body-secondary mt-2 mb-0">
-        Las demás secciones se habilitarán a medida que avance su implementación.
-    </p>
 </nav>

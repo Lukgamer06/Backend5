@@ -45,6 +45,26 @@ docker compose exec app php artisan db:seed
 
 El seeder genera datos ficticios; no lo ejecutes sobre una base compartida o de producción. Las cuentas válidas para probar deben configurarse localmente y no se distribuyen credenciales compartidas en este README. Al detener la aplicación, `docker compose down` conserva los datos; `docker compose down --volumes` también elimina los volúmenes y sus datos.
 
+## Despliegue en Render
+
+El Blueprint [render.yaml](./render.yaml) prepara dos servicios en la región Ohio: Laravel web y MySQL 8.4 privado. La web se sirve por Nginx/PHP-FPM en el puerto que Render entrega en `PORT`; las migraciones se ejecutan antes de cada despliegue. El Dockerfile de Render es independiente del Dockerfile y Compose de desarrollo local.
+
+1. Sube el repositorio a GitHub y en Render selecciona **New → Blueprint**, el repositorio y la rama que contiene `render.yaml`.
+2. Render solicitará `APP_KEY` y `APP_URL` porque no se guardan en el repositorio. Genera la clave desde la raíz con `docker compose exec app php artisan key:generate --show`. Configura `APP_URL` con la URL HTTPS pública que Render asigne al servicio web.
+3. Revisa los planes y crea los servicios. El Blueprint usa el plan pagado `1c-2g` para cada servicio y un disco MySQL persistente de 10 GB. Render genera las contraseñas de MySQL y las comparte de forma privada con Laravel; no las copies a Git ni a `APP_KEY`.
+4. Espera el despliegue y comprueba `https://<dominio-render>/up`, el login web y `https://<dominio-render>/api/v1`. La app Flutter debe usar ese mismo origen como `API_BASE_URL`; sus rutas API agregan `/api/v1`.
+
+Variables que requieren un valor manual:
+
+| Variable | Valor |
+| --- | --- |
+| `APP_KEY` | Clave estable de Laravel, generada con `php artisan key:generate --show`. Guárdala solo en los secretos de Render y no la regeneres en cada despliegue. |
+| `APP_URL` | URL HTTPS exacta asignada al servicio web, sin ruta adicional. |
+
+El Blueprint configura `APP_ENV=production`, `APP_DEBUG=false`, `DB_CONNECTION=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `LOG_CHANNEL=stderr`, sesiones cifradas en cookie y las opciones de cola/cache actuales. El servicio MySQL genera `MYSQL_PASSWORD` y `MYSQL_ROOT_PASSWORD`; Render proporciona `PORT` automáticamente. No configures `APP_HTTP_PORT` en Render: esa variable solo cambia el puerto local de Compose.
+
+El almacenamiento local de archivos, la cache en archivo y la cola `sync` no son compartidos entre instancias; el Blueprint está pensado para una sola instancia de la app y no agrega workers ni scheduler, que el código actual no requiere. El correo usa el canal `log` y no envía mensajes reales. Configura backups de MySQL con `mysqldump` y almacénalos fuera de Render; no dependas de snapshots del disco como método de restauración. Revisa los costos/planes vigentes de Render antes de crear recursos y prueba la restauración antes de usar datos reales.
+
 ## Arquitectura
 
 ```mermaid

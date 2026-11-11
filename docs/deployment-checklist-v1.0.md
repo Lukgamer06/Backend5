@@ -4,7 +4,7 @@
 
 La configuración actual de Docker Compose sirve para desarrollo local y demostración, no es una configuración de producción certificada. No se realizó ningún despliegue ni se modificaron secretos o configuración local.
 
-**Estado:** no listo para producción hasta resolver los bloqueadores de seguridad y operación señalados en esta lista. Esta revisión es estática; no reemplaza una validación de infraestructura, proveedor, DNS, TLS o restauración en el entorno destino.
+**Estado:** no se ha desplegado ni certificado producción. Se añadió una preparación específica para Render, descrita en `README.md` y `render.yaml`; su configuración estática no reemplaza una validación de infraestructura, DNS, TLS, costos, backups o restauración en el entorno destino.
 
 ## Hallazgos de configuración
 
@@ -65,6 +65,25 @@ La configuración actual de Docker Compose sirve para desarrollo local y demostr
 - [ ] Confirmar que los logs no contienen tokens, contraseñas ni datos sensibles; comprobar alertas y procedimiento de rollback.
 - [ ] Documentar responsable, ventana, resultado, versión desplegada y evidencia de backup/restauración.
 
+## Preparación específica para Render
+
+El Blueprint `render.yaml` define:
+
+- Servicio web Laravel 12 en Docker, Nginx + PHP-FPM, `PORT` dinámico, health check `/up` y migraciones con `php artisan migrate --force`.
+- Servicio privado MySQL 8.4 con disco persistente de 10 GB montado en `/var/lib/mysql`.
+- Plan `1c-2g` para cada servicio; se requiere confirmar costo y disponibilidad antes de crear los recursos.
+- `APP_KEY` y `APP_URL` como entradas manuales del Blueprint; credenciales de DB generadas por Render; conexión web→MySQL en la red privada.
+- Sesiones cifradas por cookie y configuración de una sola instancia; correo por canal `log`, cola `sync`, cache y archivos locales.
+
+Pendiente antes de tratarlo como producción:
+
+- [ ] Crear los servicios y validar el Blueprint en el workspace/region destino; no se ha ejecutado un deploy.
+- [ ] Verificar dominio/HTTPS, secretos, migraciones y smoke tests web/API/Flutter en el servicio real.
+- [ ] Configurar y probar backup/restore de MySQL mediante `mysqldump` externo al disco; Render advierte que snapshots de disco no son un método de restauración segura de bases.
+- [ ] Validar límites/costos de planes, almacenamiento, despliegues y retención con el propietario del sistema.
+- [ ] Mantener una sola instancia mientras se usan sesiones/cache/archivos locales; diseñar almacenamiento compartido antes de escalar.
+- [ ] Configurar correo transaccional si se requiere envío real; el Blueprint usa `MAIL_MAILER=log`.
+
 ## Verificaciones realizadas
 
 - Se revisaron `.env.example`, exclusión de `.env` en Git, `Dockerfile`, `compose.yaml`, Nginx, configuración de Laravel para aplicación/logs/colas/sesiones/archivos, rutas de consola y uso de jobs.
@@ -77,6 +96,7 @@ La configuración actual de Docker Compose sirve para desarrollo local y demostr
 - Aplicación: `app/`, `routes/`, `bootstrap/`, `config/`.
 - Contenedores: `Dockerfile`, `compose.yaml`, `docker/nginx/`.
 - Configuración de ejemplo: `.env.example`; los archivos `.env` locales están ignorados por Git.
+- Render: `Dockerfile.render`, `Dockerfile.mysql`, `docker/render/` y `render.yaml`.
 - Evidencia de fases anteriores: `docs/`.
 
-No se agregó infraestructura, un entorno Compose de producción ni dependencias. La decisión de hosting y la topología de producción quedan pendientes de la plataforma destino.
+No se ejecutó despliegue ni se configuraron secretos o infraestructura en una cuenta Render. Compose se conserva como entorno de desarrollo local.

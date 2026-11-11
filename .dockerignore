@@ -1,7 +1,10 @@
 .git
+.azure
 .env
 .env.*
 !.env.example
+infra
+scripts
 vendor
 node_modules
 public/build

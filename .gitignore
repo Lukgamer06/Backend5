@@ -4,6 +4,11 @@
 .env.backup
 .env.production
 .env.testing
+.azure/validate-status.json
+.azure/*.parameters.json
+.azure/*.parameters.jsonc
+.azure/*.env
+infra/azure-vm/main.json
 .phpactor.json
 .phpunit.result.cache
 /.fleet

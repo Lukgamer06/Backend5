@@ -65,6 +65,22 @@ El Blueprint configura `APP_ENV=production`, `APP_DEBUG=false`, `DB_CONNECTION=m
 
 El almacenamiento local de archivos, la cache en archivo y la cola `sync` no son compartidos entre instancias; el Blueprint está pensado para una sola instancia de la app y no agrega workers ni scheduler, que el código actual no requiere. El correo usa el canal `log` y no envía mensajes reales. Configura backups de MySQL con `mysqldump` y almacénalos fuera de Render; no dependas de snapshots del disco como método de restauración. Revisa los costos/planes vigentes de Render antes de crear recursos y prueba la restauración antes de usar datos reales.
 
+## Despliegue en Azure VM
+
+El despliegue de demostración utiliza una VM Ubuntu 24.04 `Standard_D2s_v3` en Central US, Laravel/PHP-FPM + Nginx, MySQL 8.4 privado y Caddy para HTTPS. El template Bicep abre solo los puertos 80/443 y restringe SSH a la IPv4 del equipo que despliega. La base productiva inicia vacía y se crean exactamente tres cuentas de demostración mediante `DemoAccountsSeeder`; **no ejecutes el seeder general** en producción.
+
+Requisitos: Azure CLI autenticada en la suscripción autorizada, Docker Engine, OpenSSL, Python 3, SSH y una clave SSH existente. Desde la raíz:
+
+```bash
+bash scripts/deploy-azure-vm.sh
+```
+
+El script solicita la contraseña compartida sin mostrarla en pantalla, compila localmente la imagen, crea los recursos declarados en [infra/azure-vm/](./infra/azure-vm/), genera claves de Laravel/MySQL, aplica migraciones, crea las tres cuentas y prueba `https://<FQDN>/up`. No copies el archivo de entorno del servidor ni la contraseña al repositorio. La IP pública es estática; la etiqueta DNS gratuita la genera Azure. Para detalles operativos, costos y comandos SSH consulta [la guía de Azure VM](./infra/azure-vm/README.md).
+
+La estimación consultada es ~USD 88.43/mes si la VM permanece encendida durante 730 horas, más tráfico e impuestos. Desasignar la VM detiene el cómputo, pero también deja la app y la API fuera de línea.
+
+Despliegue demo activo: [HostalConnect UNAB](https://hostalconnect-modzr3g6xybig.centralus.cloudapp.azure.com), con salud HTTPS verificada en [`/up`](https://hostalconnect-modzr3g6xybig.centralus.cloudapp.azure.com/up). Se probaron en vivo login, restauración de sesión y revocación del token para las tres cuentas de demostración. El APK debug local apunta a este origen y está instalado en el Android conectado; no es una versión firmada para tiendas. **Advertencia:** Chrome en el dispositivo mostró una intersticial de Google Safe Browsing para este FQDN. No la omitas; revisa la reputación del dominio o usa un dominio propio verificado antes de distribuir públicamente.
+
 ## Arquitectura
 
 ```mermaid
@@ -154,7 +170,7 @@ La suite Laravel usa SQLite en memoria. El informe de integración registra una 
 - [Revisión de rendimiento](./docs/performance-review-v1.0.md)
 - [Contrato y validación de API](./docs/api-v0.3-validation.md)
 
-No se ha certificado despliegue productivo, carga/estrés, firma/publicación en tiendas ni integración Flutter en vivo. Antes de desplegar, configura secretos fuera de Git, `APP_ENV=production`, `APP_DEBUG=false`, TLS, almacenamiento y backups, logs, scheduler/colas si aplican y ejecuta migraciones revisadas. Esta configuración Compose es para desarrollo local, no una arquitectura de producción.
+El despliegue demo en Azure y la API con MySQL fueron comprobados, pero no equivalen a certificar producción crítica. Siguen pendientes pruebas de carga/estrés, restauración de backups y firma/publicación en tiendas. El teléfono alcanzó el puerto TCP 443 de la VM, pero la ROM Xiaomi denegó la inyección de eventos ADB necesaria para automatizar el formulario Flutter; por ello, el inicio de sesión móvil debe comprobarse manualmente. El Compose de desarrollo local no es una arquitectura de producción.
 
 Consulta el [checklist de despliegue v1.0](./docs/deployment-checklist-v1.0.md) para hallazgos, criterios de salida y verificaciones pendientes antes de producción.
 

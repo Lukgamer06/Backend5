@@ -23,6 +23,8 @@ The script builds the Laravel image locally, creates the Azure VM, transfers the
 
 The shared demo password is read from the environment or prompted without echo. Never put it in Git, an image, or the server's persistent `.env` file. The temporary seed environment file is removed after seeding. The three accounts are `example@unab.edu.co`, `operador@unab.edu.co`, and `admin@unab.edu.co`.
 
+To populate the application after the accounts exist, run `php artisan db:seed --class=DemoDataSeeder --force` in the `app` container. This repeatable seeder keeps the three existing accounts, uses the customer and operator accounts for related records, and creates only pending demo payments; it does not process a real charge. Do not run the general `DatabaseSeeder` on Azure because it creates additional user accounts.
+
 ## Operations
 
 ```bash

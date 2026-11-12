@@ -94,6 +94,7 @@ Antes del despliegue no existían VMs, discos ni IP públicas del proyecto en Ce
 - Public endpoint: `https://hostalconnect-modzr3g6xybig.centralus.cloudapp.azure.com`; HTTPS `GET /up` returned 200, HTTP redirected to HTTPS (308), and `/` redirected to the web login (302). App, MySQL and Caddy containers are healthy.
 - Database: MySQL query returned exactly 3 users; `/tmp/hostalconnect-demo.env` was removed after seeding. Live HTTPS login, `GET /me`, logout, and token revocation passed for `example@unab.edu.co` (`CLIENTE`), `operador@unab.edu.co` (`OPERADOR`) and `admin@unab.edu.co` (`ADMINISTRADOR`).
 - Seed recovery: the first seed attempt found a stale Laravel config cache without `DEMO_ACCOUNT_PASSWORD`. Cleared configuration before seeding, rebuilt the cache without the temporary password, and updated the deploy script to do this safely with an exit cleanup trap.
+- Demo data seeding (2026-11-12): published commit `a6accaa` adds repeatable `DemoDataSeeder`, which reuses the existing customer/operator and creates no users. Azure built that commit and ran `php artisan db:seed --class=DemoDataSeeder --force`. Verified exact counts: 3 users, 1 client, 5 tables, 5 products, 1 menu with 5 products, 3 reservations, 3 orders, 6 order details, 2 incidents, and 3 pending simulated payments. API smoke checks returned 5 products, the published menu with 5 products, 3 reservations, 3 orders, and 2 incidents. `/up` returned HTTP 200; all three demo accounts still authenticate.
 - Android: APK built with `APP_ENV=production` and the Azure API origin, then installed on the connected Xiaomi 22101316G (Android 14). The phone opened a TCP connection to the VM's port 443. ADB input injection is denied by the handset, so in-app form submission could not be automated. Chrome also displayed a Safe Browsing “Sitio peligroso” interstitial for the Azure FQDN; no bypass was attempted.
 
 ## 8. Checklist de ejecución
@@ -106,6 +107,7 @@ Antes del despliegue no existían VMs, discos ni IP públicas del proyecto en Ce
 - [x] Preparar Compose/Caddy e IaC/scripts sin secretos; construir e inspeccionar imagen.
 - [x] Ejecutar pruebas Laravel y Flutter, validar despliegue local.
 - [x] Desplegar DB vacía, migrar y crear exactamente las tres cuentas requeridas.
+- [x] Ejecutar `DemoDataSeeder` en Azure y verificar datos de menú, catálogo, reservas, pedidos, pagos e incidencias sin crear cuentas adicionales.
 - [x] Verificar web (`/up`), API, autenticación/roles y TLS; probar que el teléfono alcanza TCP 443.
 - [x] Compilar APK debug con entorno `production` y el FQDN HTTPS, e instalarlo por ADB.
 - [ ] Completar login visual desde Flutter en el teléfono y resolver/revisar la advertencia Safe Browsing antes de compartir el dominio públicamente.
@@ -125,6 +127,7 @@ All validation checks pass:
 - [x] Bicep recipe — Azure policy assignment review; Central US is allowed and no other assigned policy blocks deployment.
 - [x] AZCLI/Compose — production Docker image built; Compose configuration parsed successfully.
 - [x] Backend — Laravel tests (138 passed, 872 assertions), Pint (192 files), and local `/up` health endpoint (HTTP 200).
+- [x] Seeder update — Laravel tests (139 passed, 884 assertions), Pint (194 files); repeat-seeding test confirms stable row counts and exactly three users.
 - [x] Flutter — analyze passed; 72 tests passed, one staging-dependent test skipped; no Node.js runtime/package is used.
 - [x] Static RBAC review — no managed identity or Azure data-plane integration is used, so no application role assignment is needed.
 

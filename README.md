@@ -83,6 +83,8 @@ La estimación consultada es ~USD 88.43/mes si la VM permanece encendida durante
 
 Despliegue demo activo: [HostalConnect UNAB](https://hostalconnect-modzr3g6xybig.centralus.cloudapp.azure.com), con salud HTTPS verificada en [`/up`](https://hostalconnect-modzr3g6xybig.centralus.cloudapp.azure.com/up). Se probaron en vivo login, restauración de sesión y revocación del token para las tres cuentas de demostración. El APK debug local apunta a este origen y está instalado en el Android conectado; no es una versión firmada para tiendas. **Advertencia:** Chrome en el dispositivo mostró una intersticial de Google Safe Browsing para este FQDN. No la omitas; revisa la reputación del dominio o usa un dominio propio verificado antes de distribuir públicamente.
 
+La base de Azure ya contiene datos de demostración para la web y API: 5 mesas, 5 productos, menú del día con 5 productos, 3 reservas, 3 pedidos con detalle, 2 incidencias y 3 pagos pendientes simulados. `DemoDataSeeder` conserva exactamente las tres cuentas y puede volver a ejecutarse sin duplicar esas filas; no ejecuta cobros reales.
+
 ## Arquitectura
 
 ```mermaid
